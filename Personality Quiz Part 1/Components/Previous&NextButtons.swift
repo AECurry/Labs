@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct NavigationButtons: View {
-    @Environment(QuizScreensManager.self) private var quizManager
+    
+    @Environment(QuizViewModel.self) private var quizManager
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -61,6 +62,7 @@ struct NavigationButtons: View {
                         .shadow(color: .white.opacity(0.6), radius: 12, x: 0, y: 6)
                         .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
+                .disabled(!quizManager.isCurrentQuestionAnswered)
             }
         }
         .padding(.horizontal, 30)
@@ -73,6 +75,6 @@ struct NavigationButtons: View {
     ZStack {
         MagicalBackground()
         NavigationButtons()
-            .environment(QuizScreensManager())
+            .environment(QuizViewModel())
     }
 }

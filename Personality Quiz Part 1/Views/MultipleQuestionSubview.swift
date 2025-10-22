@@ -6,8 +6,8 @@
 import SwiftUI
 
 struct MultipleQuestionSubview: View {
-    @Environment(QuizScreensManager.self) private var quizManager
-    @State private var selectedAnswerIndex: Int? = nil // Change to single selection
+    @Environment(QuizViewModel.self) private var viewModel // Updated name
+    @State private var selectedAnswerIndex: Int? = nil
     
     var body: some View {
         ZStack {
@@ -16,7 +16,7 @@ struct MultipleQuestionSubview: View {
             VStack(spacing: 30) {
                 // BREADCRUMB AT VERY TOP - CENTERED
                 VStack {
-                    Text("Question \(quizManager.currentQuestionIndex + 1) of \(quizManager.questionList.count)")
+                    Text("Question \(viewModel.currentQuestionIndex + 1) of \(viewModel.questionList.count)") // Updated
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.black)
@@ -24,26 +24,25 @@ struct MultipleQuestionSubview: View {
                 .padding(.top, 20)
                 
                 // Question Text
-                Text(quizManager.currentQuestion.text)
+                Text(viewModel.currentQuestion.text) // Updated
                     .font(.title2)
                     .fontWeight(.medium)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
                 
-                // Single selection list (changed from multiple)
+                // Single selection list
                 ScrollView {
                     VStack(spacing: 12) {
-                        ForEach(0..<quizManager.currentQuestion.answers.count, id: \.self) { index in
+                        ForEach(0..<viewModel.currentQuestion.answers.count, id: \.self) { index in // Updated
                             Button(action: {
-                                // Single selection logic - only one can be selected
                                 selectedAnswerIndex = index
-                                quizManager.selectAnswer(quizManager.currentQuestion.answers[index])
+                                viewModel.selectAnswer(viewModel.currentQuestion.answers[index]) // Updated
                             }) {
                                 HStack {
-                                    Text(quizManager.currentQuestion.answers[index].text)
+                                    Text(viewModel.currentQuestion.answers[index].text) // Updated
                                         .foregroundColor(.white)
-                                        .fontWeight(selectedAnswerIndex == index ? .bold : .regular) // Bold when selected
+                                        .fontWeight(selectedAnswerIndex == index ? .bold : .regular)
                                     Spacer()
                                     if selectedAnswerIndex == index {
                                         Image(systemName: "checkmark.circle.fill")
@@ -55,7 +54,7 @@ struct MultipleQuestionSubview: View {
                                 }
                                 .padding()
                                 .background(selectedAnswerIndex == index ?
-                                           Color.white.opacity(0.3) : // Highlight when selected
+                                           Color.white.opacity(0.3) :
                                            Color.white.opacity(0.2))
                                 .cornerRadius(10)
                             }
@@ -72,12 +71,5 @@ struct MultipleQuestionSubview: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-    }
-}
-
-#Preview {
-    NavigationStack {
-        MultipleQuestionSubview()
-            .environment(QuizScreensManager())
     }
 }

@@ -8,14 +8,13 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var quizManager = QuizScreensManager()
+    @State private var viewModel = QuizViewModel()
     
     var body: some View {
         NavigationStack {
             TitleView()
-                .environment(quizManager) // Inject here too for safety
         }
-        .environment(quizManager)
+        .environment(viewModel)
     }
 }
 

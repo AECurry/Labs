@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct TestView: View {
-    @Environment(QuizScreensManager.self) private var quizManager
+    @Environment(QuizViewModel.self) private var quizManager
     
     var body: some View {
         ZStack {
@@ -35,13 +35,12 @@ struct TestView: View {
                 .buttonStyle(.borderedProminent)
                 
                 Button("Reset Quiz") {
-                    quizManager.currentQuestionIndex = 0
-                    quizManager.selectedAnswers.removeAll()
+                    quizManager.resetQuiz()
                 }
                 .buttonStyle(.bordered)
                 
-                // ADD THIS - Navigate to actual quiz
-                NavigationLink("Go to Actual Quiz", destination: QuestionFlowView())
+             
+                NavigationLink("Go to Single Question", destination: SingleQuestionSubview())
                     .buttonStyle(.borderedProminent)
                     .foregroundColor(.white)
             }
@@ -53,6 +52,6 @@ struct TestView: View {
 #Preview {
     NavigationStack {
         TestView()
-            .environment(QuizScreensManager())
+            .environment(QuizViewModel())
     }
 }

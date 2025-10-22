@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ResultsView: View {
-    @Environment(QuizScreensManager.self) private var quizManager
+    @Environment(QuizViewModel.self) private var viewModel // Updated name
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -22,7 +22,7 @@ struct ResultsView: View {
                     .foregroundColor(.white)
                 
                 // Display the actual calculated results
-                let result = quizManager.calculateResults()
+                let result = viewModel.calculateResults() // Updated
                 VStack(spacing: 15) {
                     Text(result)
                         .font(.title2)
@@ -36,12 +36,10 @@ struct ResultsView: View {
                 .padding(.horizontal)
                 
                 Button("Take Quiz Again") {
-                    // Reset quiz data
-                    quizManager.currentQuestionIndex = 0
-                    quizManager.selectedAnswers.removeAll()
+                    // Reset quiz data using ViewModel function
+                    viewModel.resetQuiz() // Updated
                     
                     // Navigate all the way back to TitleView
-                    // This will pop all views from the navigation stack
                     dismiss()
                 }
                 .font(.title3)
@@ -56,12 +54,5 @@ struct ResultsView: View {
             .padding()
         }
         .navigationBarBackButtonHidden(true)
-    }
-}
-
-#Preview {
-    NavigationStack {
-        ResultsView()
-            .environment(QuizScreensManager())
     }
 }

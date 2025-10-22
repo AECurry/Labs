@@ -8,11 +8,10 @@
 import SwiftUI
 
 struct TitleView: View {
-    @Environment(QuizScreensManager.self) private var quizManager // ← ADD THIS LINE
+    @Environment(QuizViewModel.self) private var quizManager
     
     var body: some View {
         ZStack {
-            // Use our reusable magical background
             MagicalBackground()
             
             VStack(spacing: 0) {
@@ -69,8 +68,8 @@ struct TitleView: View {
                 .padding(.bottom, 90)
                 
                 // Enhanced button with glow effect
+                // NAVIGATE TO QuestionFlowView - this will handle routing to the correct question type
                 NavigationLink(destination: QuestionFlowView()) {
-                    
                     HStack(spacing: 12) {
                         Text("Begin Quiz")
                             .font(.title3)
@@ -98,9 +97,8 @@ struct TitleView: View {
         }
         .navigationBarBackButtonHidden(true)
         .onAppear {
-            // Reset quiz when returning to title screen ← ADD THIS
-            quizManager.currentQuestionIndex = 0
-            quizManager.selectedAnswers.removeAll()
+            // Reset quiz when returning to title screen
+            quizManager.resetQuiz()
         }
     }
 }
@@ -108,6 +106,6 @@ struct TitleView: View {
 #Preview {
     NavigationStack {
         TitleView()
-            .environment(QuizScreensManager()) // ← ADD ENVIRONMENT HERE
+            .environment(QuizViewModel())
     }
 }

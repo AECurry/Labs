@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct RangedQuestionSubview: View {
-    @Environment(QuizScreensManager.self) private var quizManager
+    @Environment(QuizViewModel.self) private var viewModel // Updated name
     @State private var sliderValue = 2.0
     
     var body: some View {
@@ -18,7 +18,7 @@ struct RangedQuestionSubview: View {
             VStack(spacing: 30) {
                 // BREADCRUMB AT VERY TOP - CENTERED
                 VStack {
-                    Text("Question \(quizManager.currentQuestionIndex + 1) of \(quizManager.questionList.count)")
+                    Text("Question \(viewModel.currentQuestionIndex + 1) of \(viewModel.questionList.count)") // Updated
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.black)
@@ -26,7 +26,7 @@ struct RangedQuestionSubview: View {
                 .padding(.top, 20)
                 
                 // Question Text
-                Text(quizManager.currentQuestion.text)
+                Text(viewModel.currentQuestion.text) // Updated
                     .font(.title2)
                     .fontWeight(.medium)
                     .foregroundColor(.white)
@@ -39,20 +39,20 @@ struct RangedQuestionSubview: View {
                         .accentColor(.white)
                         .onChange(of: sliderValue) { oldValue, newValue in
                             let answerIndex = Int(newValue) - 1
-                            if quizManager.currentQuestion.answers.indices.contains(answerIndex) {
-                                quizManager.selectAnswer(quizManager.currentQuestion.answers[answerIndex])
+                            if viewModel.currentQuestion.answers.indices.contains(answerIndex) { // Updated
+                                viewModel.selectAnswer(viewModel.currentQuestion.answers[answerIndex]) // Updated
                             }
                         }
                     
                     HStack {
-                        if quizManager.currentQuestion.answers.count > 0 {
-                            Text(quizManager.currentQuestion.answers[0].text)
+                        if viewModel.currentQuestion.answers.count > 0 { // Updated
+                            Text(viewModel.currentQuestion.answers[0].text) // Updated
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
                         }
                         Spacer()
-                        if quizManager.currentQuestion.answers.count > 3 {
-                            Text(quizManager.currentQuestion.answers[3].text)
+                        if viewModel.currentQuestion.answers.count > 3 { // Updated
+                            Text(viewModel.currentQuestion.answers[3].text) // Updated
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
                         }
@@ -71,12 +71,5 @@ struct RangedQuestionSubview: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-    }
-}
-
-#Preview {
-    NavigationStack {
-        RangedQuestionSubview()
-            .environment(QuizScreensManager())
     }
 }

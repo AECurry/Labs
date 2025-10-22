@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SingleQuestionSubview: View {
-    @Environment(QuizScreensManager.self) private var quizManager
+    @Environment(QuizViewModel.self) private var viewModel // Updated name
     @State private var selectedAnswerIndex = 0
     
     var body: some View {
@@ -18,7 +18,7 @@ struct SingleQuestionSubview: View {
             VStack(spacing: 30) {
                 // BREADCRUMB AT VERY TOP - CENTERED
                 VStack {
-                    Text("Question \(quizManager.currentQuestionIndex + 1) of \(quizManager.questionList.count)")
+                    Text("Question \(viewModel.currentQuestionIndex + 1) of \(viewModel.questionList.count)") // Updated
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.black)
@@ -26,7 +26,7 @@ struct SingleQuestionSubview: View {
                 .padding(.top, 20)
                 
                 // Question Text
-                Text(quizManager.currentQuestion.text)
+                Text(viewModel.currentQuestion.text) // Updated
                     .font(.title2)
                     .fontWeight(.medium)
                     .foregroundColor(.white)
@@ -35,8 +35,8 @@ struct SingleQuestionSubview: View {
                 
                 // Picker for single selection
                 Picker("Select an answer", selection: $selectedAnswerIndex) {
-                    ForEach(0..<quizManager.currentQuestion.answers.count, id: \.self) { index in
-                        Text(quizManager.currentQuestion.answers[index].text)
+                    ForEach(0..<viewModel.currentQuestion.answers.count, id: \.self) { index in // Updated
+                        Text(viewModel.currentQuestion.answers[index].text) // Updated
                             .foregroundColor(.white)
                             .fontWeight(selectedAnswerIndex == index ? .bold : .regular)
                             .tag(index)
@@ -47,7 +47,7 @@ struct SingleQuestionSubview: View {
                 .cornerRadius(10)
                 .padding(.horizontal)
                 .onChange(of: selectedAnswerIndex) {
-                    quizManager.selectAnswer(quizManager.currentQuestion.answers[selectedAnswerIndex])
+                    viewModel.selectAnswer(viewModel.currentQuestion.answers[selectedAnswerIndex]) // Updated
                 }
                 
                 Spacer()
@@ -58,12 +58,5 @@ struct SingleQuestionSubview: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-    }
-}
-
-#Preview {
-    NavigationStack {
-        SingleQuestionSubview()
-            .environment(QuizScreensManager())
     }
 }

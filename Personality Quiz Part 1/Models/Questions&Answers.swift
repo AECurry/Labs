@@ -44,15 +44,15 @@ enum PatronusType: String, CaseIterable {
     
     var description: String {
         switch self {
-        case .stag: return "The Protector - Noble and brave"
-        case .otter: return "The Bright Friend - Intelligent and playful"
-        case .wolf: return "The Pack Guardian - Loyal and protective"
-        case .dolphin: return "The Joyful Guardian - Social and wise"
-        case .swan: return "The Graceful Defender - Elegant and strong"
-        case .hare: return "The Unique Visionary - Creative and intuitive"
-        case .fox: return "The Clever Strategist - Adaptable and quick-witted"
-        case .wildBoar: return "The Fearless Challenger - Brave and determined"
-        case .granianWingedHorse: return "The Noble Specialist - Gifted and dedicated"
+        case .stag: return "The Protector - Noble, brave, and fiercely protective of loved ones"
+        case .otter: return "The Bright Friend - Intelligent, playful, and clever problem-solver"
+        case .wolf: return "The Pack Guardian - Loyal, protective, and values family above all"
+        case .dolphin: return "The Joyful Guardian - Social, wise, and brings happiness to others"
+        case .swan: return "The Graceful Defender - Elegant, strong-willed, and fiercely loyal"
+        case .hare: return "The Unique Visionary - Creative, intuitive, and marches to their own drum"
+        case .fox: return "The Clever Strategist - Adaptable, quick-witted, and resourceful"
+        case .wildBoar: return "The Fearless Challenger - Brave, determined, and unstoppable"
+        case .granianWingedHorse: return "The Noble Specialist - Gifted, dedicated, and exceptional"
         }
     }
     
@@ -71,173 +71,169 @@ enum PatronusType: String, CaseIterable {
     }
 }
 
-// Question Bank - All 10 Questions IN THIS SAME FILE
+// Question Bank - Improved for better distribution
+// Question Bank - REBALANCED for better distribution
 struct QuestionBank {
     static let questions: [Question] = [
         
-        // Question 1: Card style
+        // Question 1: Core values - More specialized
         Question(
             text: "What is your most valued trait in a close friend?",
             type: .card,
             answers: [
                 Answer(text: "Unshakable loyalty, no matter what",
-                       points: [.wolf: 2, .wildBoar: 1]),
+                       points: [.wolf: 3, .stag: 2]), // Wolf specialty
                 Answer(text: "A brilliant mind and clever wit",
-                       points: [.otter: 2, .fox: 1]),
+                       points: [.otter: 3, .fox: 2]), // Otter specialty
                 Answer(text: "A kind and playful spirit that brings joy",
-                       points: [.dolphin: 2, .otter: 1]),
+                       points: [.dolphin: 3, .hare: 2]), // Dolphin specialty
                 Answer(text: "The courage to be their unique, authentic self",
-                       points: [.hare: 2, .granianWingedHorse: 1])
+                       points: [.granianWingedHorse: 3, .wildBoar: 2]) // Specialized
             ]
         ),
         
-        // Question 2: Single choice
+        // Question 2: Problem solving - More distinct
         Question(
             text: "When faced with a difficult problem, your first instinct is to:",
             type: .single,
             answers: [
                 Answer(text: "Research and plan meticulously",
-                       points: [.otter: 2, .fox: 1]),
+                       points: [.otter: 3, .swan: 2]), // Thinkers
                 Answer(text: "Trust your gut and adapt as you go",
-                       points: [.fox: 2, .hare: 1]),
+                       points: [.fox: 3, .hare: 2]), // Adaptable
                 Answer(text: "Gather friends to tackle it together",
-                       points: [.dolphin: 2, .wolf: 1]),
+                       points: [.dolphin: 3, .wolf: 2]), // Social
                 Answer(text: "Charge ahead with determination",
-                       points: [.wildBoar: 2, .stag: 1])
+                       points: [.wildBoar: 3, .stag: 2]) // Bold
             ]
         ),
         
-        // Question 3: Multiple choice
+        // Question 3: Activities - More specialized
         Question(
             text: "Which activities do you find most inspiring?",
             type: .multiple,
             answers: [
                 Answer(text: "Reading and learning new things",
-                       points: [.otter: 2, .fox: 1]),
+                       points: [.otter: 3, .swan: 1]), // Intellectual
                 Answer(text: "Creative arts and self-expression",
-                       points: [.hare: 2, .granianWingedHorse: 1]),
+                       points: [.hare: 3, .granianWingedHorse: 1]), // Creative
                 Answer(text: "Social gatherings with friends",
-                       points: [.dolphin: 2, .wolf: 1]),
+                       points: [.dolphin: 3, .wolf: 1]), // Social
                 Answer(text: "Physical challenges and sports",
-                       points: [.stag: 2, .wildBoar: 1])
+                       points: [.stag: 3, .wildBoar: 1]) // Physical
             ]
         ),
         
-        // Question 4: Ranged
+        // Question 4: Social preferences - More extreme
         Question(
             text: "How much do you enjoy social gatherings?",
             type: .ranged,
             answers: [
                 Answer(text: "I prefer solitude",
-                       points: [.hare: 2, .fox: 1]),
+                       points: [.hare: 3, .fox: 2, .swan: 1]), // Solitary
                 Answer(text: "Small groups are best",
-                       points: [.fox: 2, .swan: 1]),
+                       points: [.swan: 2, .stag: 2, .otter: 1]), // Selective
                 Answer(text: "I enjoy medium gatherings",
-                       points: [.swan: 2, .dolphin: 1]),
+                       points: [.wolf: 2, .dolphin: 2, .fox: 1]), // Moderate
                 Answer(text: "The bigger the party, the better!",
-                       points: [.dolphin: 2, .otter: 1])
+                       points: [.dolphin: 3, .wildBoar: 2, .granianWingedHorse: 1]) // Social
             ]
         ),
         
-        // Question 5: Card style
+        // Question 5: Environment - More distinct
         Question(
             text: "What environment makes you feel most at peace?",
             type: .card,
             answers: [
                 Answer(text: "A cozy library full of books",
-                       points: [.otter: 2, .swan: 1]),
+                       points: [.otter: 3, .swan: 2]), // Intellectual
                 Answer(text: "A vibrant social gathering",
-                       points: [.dolphin: 2, .wolf: 1]),
+                       points: [.dolphin: 3, .wolf: 2]), // Social
                 Answer(text: "The deep, quiet wilderness",
-                       points: [.stag: 2, .hare: 1]),
+                       points: [.stag: 3, .hare: 2, .fox: 1]), // Nature
                 Answer(text: "Anywhere with wide open skies",
-                       points: [.granianWingedHorse: 2, .fox: 1])
+                       points: [.granianWingedHorse: 3, .wildBoar: 2]) // Freedom
             ]
         ),
         
-        // Question 6: Single choice
+        // Question 6: Team role - More specialized
         Question(
             text: "What is your greatest strength in a team?",
             type: .single,
             answers: [
                 Answer(text: "My ability to lead and protect",
-                       points: [.stag: 2, .wolf: 1]),
+                       points: [.stag: 3, .wolf: 2]), // Leader
                 Answer(text: "My creativity and unique ideas",
-                       points: [.hare: 2, .fox: 1]),
+                       points: [.hare: 3, .granianWingedHorse: 2]), // Creative
                 Answer(text: "My dedication and hard work",
-                       points: [.granianWingedHorse: 2, .wildBoar: 1]),
+                       points: [.wildBoar: 3, .granianWingedHorse: 2]), // Worker
                 Answer(text: "Keeping the team united and happy",
-                       points: [.dolphin: 2, .swan: 1])
+                       points: [.dolphin: 3, .swan: 2]) // Unifier
             ]
         ),
         
-        // Question 7: Multiple choice
+        // Question 7: Admired qualities - More focused
         Question(
             text: "What qualities do you admire most in others?",
             type: .multiple,
             answers: [
                 Answer(text: "Bravery and courage",
-                       points: [.wildBoar: 2, .stag: 1]),
+                       points: [.wildBoar: 3, .stag: 2]), // Brave
                 Answer(text: "Intelligence and wisdom",
-                       points: [.otter: 2, .fox: 1]),
+                       points: [.otter: 3, .fox: 2]), // Smart
                 Answer(text: "Loyalty and reliability",
-                       points: [.wolf: 2, .swan: 1]),
+                       points: [.wolf: 3, .swan: 2]), // Loyal
                 Answer(text: "Creativity and freedom",
-                       points: [.granianWingedHorse: 2, .hare: 1])
+                       points: [.hare: 3, .granianWingedHorse: 2]) // Free-spirited
             ]
         ),
         
-        // Question 8: Ranged
+        // Question 8: Risk tolerance - More extreme
         Question(
             text: "How do you feel about taking risks?",
             type: .ranged,
             answers: [
                 Answer(text: "I avoid risks whenever possible",
-                       points: [.swan: 2, .otter: 1]),
+                       points: [.swan: 3, .otter: 2]), // Cautious
                 Answer(text: "I'm cautious but will take calculated risks",
-                       points: [.fox: 2, .stag: 1]),
+                       points: [.fox: 3, .wolf: 1]), // Calculated
                 Answer(text: "I'm comfortable with reasonable risks",
-                       points: [.stag: 2, .dolphin: 1]),
+                       points: [.dolphin: 2, .stag: 2, .hare: 1]), // Balanced
                 Answer(text: "I thrive on adventure and risk",
-                       points: [.wildBoar: 2, .granianWingedHorse: 1])
+                       points: [.wildBoar: 3, .granianWingedHorse: 2]) // Adventurous
             ]
         ),
         
-        // Question 9: Card style
+        // Question 9: Weekend preferences - More distinct
         Question(
             text: "What does your perfect weekend look like?",
             type: .card,
             answers: [
                 Answer(text: "Quiet time with a good book",
-                       points: [.otter: 2, .swan: 1]),
+                       points: [.otter: 3, .hare: 2]), // Quiet
                 Answer(text: "An adventure with close friends",
-                       points: [.wolf: 2, .dolphin: 1]),
-                Answer(text: "A elegant evening with a loved one",
-                       points: [.swan: 2, .stag: 1]),
+                       points: [.wolf: 3, .dolphin: 2]), // Social adventure
+                Answer(text: "An elegant evening with a loved one",
+                       points: [.swan: 3, .stag: 2]), // Refined
                 Answer(text: "Training for a personal goal",
-                       points: [.granianWingedHorse: 2, .wildBoar: 1])
+                       points: [.granianWingedHorse: 3, .wildBoar: 2]) // Ambitious
             ]
         ),
         
-        // Question 10: Single choice (NO COMMA after this last one)
+        // Question 10: Proudest quality - More specialized
         Question(
             text: "What quality do you pride yourself on the most?",
             type: .single,
             answers: [
                 Answer(text: "My courage and resilience",
-                       points: [.wildBoar: 2, .stag: 1]),
+                       points: [.wildBoar: 3, .stag: 2]), // Brave
                 Answer(text: "My intelligence and knowledge",
-                       points: [.otter: 2, .fox: 1]),
+                       points: [.otter: 3, .fox: 2]), // Intelligent
                 Answer(text: "My loyalty and devotion",
-                       points: [.wolf: 2, .swan: 1]),
+                       points: [.wolf: 3, .swan: 2]), // Loyal
                 Answer(text: "My individuality and free spirit",
-                       points: [.hare: 2, .granianWingedHorse: 1])
+                       points: [.hare: 3, .granianWingedHorse: 2]) // Unique
             ]
-        ) // ← NO COMMA HERE (last element in array)
+        )
     ]
-    
-    // Helper to get points for an answer
-    static func points(for answer: Answer, patronus: PatronusType) -> Int {
-        return answer.patronusPoints[patronus] ?? 0
-    }
 }
