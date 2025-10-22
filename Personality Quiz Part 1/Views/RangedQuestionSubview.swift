@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct RangedQuestionSubview: View {
-    @Environment(QuizViewModel.self) private var viewModel // Updated name
+    @Environment(QuizViewModel.self) private var viewModel 
     @State private var sliderValue = 2.0
     
     var body: some View {

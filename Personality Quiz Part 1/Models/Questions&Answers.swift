@@ -2,7 +2,7 @@
 //  Questions&Answers.swift
 //  Personality Quiz Part 1
 //
-//  Created by [Your Name] on [Date]
+//  Created by AnnElaine on 10/21/25.
 //
 
 import SwiftUI
@@ -71,8 +71,7 @@ enum PatronusType: String, CaseIterable {
     }
 }
 
-// Question Bank - Improved for better distribution
-// Question Bank - REBALANCED for better distribution
+// Question Bank 
 struct QuestionBank {
     static let questions: [Question] = [
         

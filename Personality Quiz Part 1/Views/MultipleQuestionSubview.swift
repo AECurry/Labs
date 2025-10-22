@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct MultipleQuestionSubview: View {
-    @Environment(QuizViewModel.self) private var viewModel // Updated name
+    @Environment(QuizViewModel.self) private var viewModel 
     @State private var selectedAnswerIndex: Int? = nil
     
     var body: some View {

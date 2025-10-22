@@ -9,12 +9,12 @@ import SwiftUI
 
 @Observable
 class QuizViewModel {
-    // MARK: - Properties
+    // Properties
     let questionList: [Question] = QuestionBank.questions
     var currentQuestionIndex = 0
     var selectedAnswers: [Answer] = []
     
-    // MARK: - Computed Properties
+    // Computed Properties
     var currentQuestion: Question {
         guard questionList.indices.contains(currentQuestionIndex) else {
             return Question(text: "Quiz Complete!", type: .single, answers: [])
@@ -41,7 +41,7 @@ class QuizViewModel {
         return !currentAnswer.text.isEmpty // The placeholder has empty text
     }
     
-    // MARK: - Answer Selection Functions
+    // Answer Selection Functions
     func selectAnswer(_ answer: Answer) {
         // Ensure we have an array slot for the current question
         while selectedAnswers.count <= currentQuestionIndex {
@@ -59,7 +59,7 @@ class QuizViewModel {
         }
     }
     
-    // MARK: - Navigation Functions
+    // Navigation Functions
     func goToNextQuestion() {
         if currentQuestionIndex < questionList.count - 1 {
             currentQuestionIndex += 1
@@ -72,7 +72,7 @@ class QuizViewModel {
         }
     }
     
-    // MARK: - .onAppear Support Functions
+    // .onAppear Support Functions
     func onQuestionViewAppear() {
         print("🔮 Question \(currentQuestionIndex + 1) appeared: \(currentQuestion.text)")
         print("   Question type: \(currentQuestion.type)")
@@ -96,7 +96,7 @@ class QuizViewModel {
         print("   Total questions: \(questionList.count)")
     }
     
-    // MARK: - Results Calculation
+    // Results Calculation
     func calculateResults() -> String {
         var scores: [PatronusType: Int] = [:]
         
@@ -121,7 +121,7 @@ class QuizViewModel {
         return "Unable to calculate your Patronus. Please try again."
     }
     
-    // MARK: - Reset Function
+    // Reset Function
     func resetQuiz() {
         currentQuestionIndex = 0
         selectedAnswers.removeAll()

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SingleQuestionSubview: View {
-    @Environment(QuizViewModel.self) private var viewModel // Updated name
+    @Environment(QuizViewModel.self) private var viewModel 
     @State private var selectedAnswerIndex = 0
     
     var body: some View {

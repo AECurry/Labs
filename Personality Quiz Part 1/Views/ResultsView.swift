@@ -37,7 +37,7 @@ struct ResultsView: View {
                 
                 Button("Take Quiz Again") {
                     // Reset quiz data using ViewModel function
-                    viewModel.resetQuiz() // Updated
+                    viewModel.resetQuiz() 
                     
                     // Navigate all the way back to TitleView
                     dismiss()

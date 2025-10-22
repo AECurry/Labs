@@ -11,8 +11,6 @@ struct CardQuestionSubview: View {
     @Environment(QuizViewModel.self) private var quizManager
     @State private var selectedCardIndex: Int? = nil
     
-    // LET VIEWMODEL: QuizViewModel
-    
     var body: some View {
         ZStack {
             MagicalBackground()
