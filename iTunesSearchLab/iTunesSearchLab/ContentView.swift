@@ -7,58 +7,35 @@
 
 import SwiftUI
 
-/// Main screen - displays search results in console
 struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("iTunes Search Lab")
-                .font(.title)
-            Text("Part 2 - Decoded Objects") // Shows we're displaying objects, not raw JSON
-                .font(.subheadline)
-        }
-        .padding()
-        .onAppear {
-            performSearch() // Start search when screen loads
-        }
-    }
+    @State var viewModel = StoreItemListViewModel()
     
-    /// Executes search and displays formatted results
-    func performSearch() {
-        // Search for Apple ebooks (lab requirement)
-        let query = [
-            "term": "Apple",   // Search query
-            "media": "ebook",  // Media type filter
-            "limit": "10"      // Number of results
-        ]
-        
-        // Async task for network call
-        Task {
-            do {
-                // Fetch and decode items
-                let items = try await fetchItems(matching: query)
-                
-                // Display formatted results
-                print("🎉 SUCCESS: Decoded \(items.count) StoreItem Objects")
-                print("========================================")
-                
-                for item in items {
-                    print("""
-                    Name: \(item.name)
-                    Artist: \(item.artist)
-                    Type: \(item.mediaType)
-                    Description: \(item.description)
-                    Artwork: \(item.artworkURL)
-                    --------------------
-                    """)
+    var body: some View {
+        NavigationStack {
+            VStack {
+                Picker("Media Type", selection: $viewModel.selectedMediaType) {
+                    ForEach(MediaType.allCases, id: \.self) {
+                        Text($0.rawValue.capitalized)
+                    }
                 }
-                print("🎯 Part 2 Complete - Raw JSON → Typed Swift Objects!")
+                .pickerStyle(.segmented)
+                .padding([.horizontal, .top])
                 
-            } catch {
-                print("❌ Search failed: \(error.localizedDescription)")
+                TextField("Search...", text: $viewModel.searchText)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .submitLabel(.search)
+                    .onSubmit { viewModel.fetchMatchingItems() }
+                    .padding([.horizontal, .bottom])
+
+                List(viewModel.items, id: \.self) { item in
+                    ItemCellView(item: item) {
+                        viewModel.fetchPreview(item: item)
+                    }
+                }
+                .listStyle(.plain)
             }
+            .navigationTitle("iTunes Search")
+            .onAppear { viewModel.fetchMatchingItems() }
         }
     }
 }

@@ -7,10 +7,11 @@
 
 import SwiftUI
 
+// Creates an enchanting background for the quiz app
 struct MagicalBackground: View {
     var body: some View {
         ZStack {
-            // Magical gradient background
+            // Main gradient - gives magical color transition from purple to blue
             LinearGradient(
                 colors: [.purple, .indigo, .blue],
                 startPoint: .topLeading,
@@ -18,7 +19,7 @@ struct MagicalBackground: View {
             )
             .ignoresSafeArea()
             
-            // Subtle sparkle overlay
+            // Sparkle effect - random white circles that look like stars/twinkles
             GeometryReader { geometry in
                 ZStack {
                     ForEach(0..<15) { i in
