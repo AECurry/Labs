@@ -6,39 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		49B7D37F2EC794A200752F61 /* iTunesSearchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B7D37A2EC794A200752F61 /* iTunesSearchApp.swift */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
 		0AD06FA72EB910E800C945F3 /* iTunesSearch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTunesSearch.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		49B7D37A2EC794A200752F61 /* iTunesSearchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTunesSearchApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0AD06FA92EB910E800C945F3 /* iTunesSearch */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = iTunesSearch;
-			sourceTree = "<group>";
-		};
-		49B7D3852EC799D600752F61 /* ViewModel */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ViewModel;
-			sourceTree = "<group>";
-		};
-		49B7D38A2EC7AA6800752F61 /* Models */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Models;
-			sourceTree = "<group>";
-		};
-		49B7D38B2EC7AA8400752F61 /* Views */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Views;
-			sourceTree = "<group>";
-		};
-		49B7D38C2EC7AA9000752F61 /* Controllers */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Controllers;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -58,11 +33,6 @@
 			isa = PBXGroup;
 			children = (
 				0AD06FA92EB910E800C945F3 /* iTunesSearch */,
-				49B7D38A2EC7AA6800752F61 /* Models */,
-				49B7D3852EC799D600752F61 /* ViewModel */,
-				49B7D38B2EC7AA8400752F61 /* Views */,
-				49B7D38C2EC7AA9000752F61 /* Controllers */,
-				49B7D37A2EC794A200752F61 /* iTunesSearchApp.swift */,
 				0AD06FA82EB910E800C945F3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -92,10 +62,6 @@
 			);
 			fileSystemSynchronizedGroups = (
 				0AD06FA92EB910E800C945F3 /* iTunesSearch */,
-				49B7D3852EC799D600752F61 /* ViewModel */,
-				49B7D38A2EC7AA6800752F61 /* Models */,
-				49B7D38B2EC7AA8400752F61 /* Views */,
-				49B7D38C2EC7AA9000752F61 /* Controllers */,
 			);
 			name = iTunesSearch;
 			packageProductDependencies = (
@@ -153,7 +119,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				49B7D37F2EC794A200752F61 /* iTunesSearchApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
