@@ -29,7 +29,7 @@ struct DragonListView: View {
                     Spacer()
                     
                     Button {
-                        mainRouter.presentSheet(.about)
+                        mainRouter.presentSheet(.settings)
                     } label: {
                         Image(systemName: "gearshape.fill")
                             .font(.title2)

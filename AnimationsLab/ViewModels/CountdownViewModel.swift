@@ -5,37 +5,36 @@
 //  Created by [Your Name] on [Date].
 //
 
+
+/// STATE MANAGER: Single source of truth for countdown logic
+/// SOLID: Single Responsibility - manages countdown state and timing
+/// Observable: Children can @Bindable to this for reactive updates
 import SwiftUI
 import Observation
 
-/// Manages the countdown logic and animation state.
-/// Uses SwiftUI's modern @Observable pattern.
 @Observable
 class CountdownViewModel {
-    // MARK: - State Properties
+    // MARK: - Public State (Observable by child views)
+    var currentNumber: Int?
+    var showGoText = false
+    var isCountdownActive = false
+    var isAnimating = false
+    var currentNumberIsFadingOut = false
+    var symbolsState: [Bool] = Array(repeating: false, count: 4) // For controlling symbol animations
     
-    var currentNumber: Int?      // Currently displayed number (3, 2, or 1)
-    var showGoText = false      // Whether "GO!" text should be visible
-    var isCountdownActive = false  // Whether countdown sequence is running
-    var isAnimating = false     // Whether any animation is in progress
-    
-    // Computed property to control "Get Ready..." visibility
+    // Computed property for child views
     var shouldShowGetReady: Bool {
         isCountdownActive && !showGoText
     }
     
-    // MARK: - Private Properties
-    private var currentIndex: Int = 0  // Tracks position in countdown sequence
-    private var timer: Timer?         // Controls timing between numbers
-    
-    // MARK: - Cleanup
+    // Private State (Internal logic only)
+    private var currentIndex: Int = 0
+    private var timer: Timer?
     deinit {
-        timer?.invalidate()
-    }
+            timer?.invalidate()
+        }
     
-    // MARK: - Public Methods
-    
-    /// Starts the 3-2-1-GO! countdown animation sequence
+    // Starts the countdown sequence from 4
     func startCountdown() {
         guard !isAnimating else { return }
         
@@ -43,45 +42,75 @@ class CountdownViewModel {
         isCountdownActive = true
         isAnimating = true
         currentIndex = 0
-        animateNextNumber()
+        symbolsState = Array(repeating: false, count: 4)
+        
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            animateNextNumber()
+        }
     }
     
-    /// Resets all state to initial values
+    // Restes all state to initial values
     func resetCountdown() {
         timer?.invalidate()
         timer = nil
         currentIndex = 0
         currentNumber = nil
+        currentNumberIsFadingOut = false
         isAnimating = false
         showGoText = false
         isCountdownActive = false
+        symbolsState = Array(repeating: false, count: 4)
     }
     
-    // MARK: - Private Animation Logic
-    
-    /// Animates through countdown numbers: 3 → 2 → 1 → GO!
     private func animateNextNumber() {
-        let countdownNumbers = [3, 2, 1]
+        let countdownNumbers = [4, 3, 2, 1]
         
-        // If done with numbers, show "GO!"
         guard currentIndex < countdownNumbers.count else {
-            currentNumber = nil  // Clear the last number
-            
-            // Brief pause before showing "GO!"
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                self.showGoText = true
-                self.isAnimating = false
-            }
+            // All numbers done, show GO! after last number spins out
+            fadeOutCurrentNumberThenShowGo()
             return
         }
         
-        // Show current number
         currentNumber = countdownNumbers[currentIndex]
+        currentNumberIsFadingOut = false
         
-        // Schedule next number after 1 second
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.currentIndex += 1
-            self?.animateNextNumber()
+        // Update symbol state for matched geometry effect
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+            symbolsState[currentIndex] = true
+        }
+        
+        // Display number for 1.5 seconds, then start spin/fade
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            withAnimation {
+                self?.startFadeOut()
+            }
+        }
+    }
+    
+    private func startFadeOut() {
+        // Trigger spin animation (handled in CountdownNumberView)
+        currentNumberIsFadingOut = true
+        
+        // Wait for spin animation (0.4s) to complete, then move to next number
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            withAnimation {
+                self?.currentIndex += 1
+                self?.animateNextNumber()
+            }
+        }
+    }
+    
+    private func fadeOutCurrentNumberThenShowGo() {
+        // Trigger final number spin
+        currentNumberIsFadingOut = true
+        
+        // Wait for final spin animation (0.4s) then show GO!
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                self?.currentNumber = nil
+                self?.showGoText = true
+                self?.isAnimating = false
+            }
         }
     }
 }

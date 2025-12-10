@@ -5,6 +5,8 @@
 //  Created by AnnElaine on 12/5/25.
 //
 
+/// MODEL: SwiftData persistence model (currently unused but ready for future)
+/// SOLID: Single Responsibility - represents countdown session data
 import Foundation
 import SwiftData
 
@@ -24,3 +26,4 @@ class CountdownSession {
         self.numbers = numbers
     }
 }
+

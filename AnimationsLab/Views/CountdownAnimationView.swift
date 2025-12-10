@@ -2,57 +2,66 @@
 //  CountdownAnimationView.swift
 //  AnimationsLab
 //
-//  Created by [Your Name] on [Date].
+//  Created by AnnElaine on 12/5/25.
 //
 
+/// CHILD: Displays numbers and GO! text in foreground
+/// DEPENDENCY: Receives @Bindable viewModel from parent
+/// SOLID: Single Responsibility - renders number/text animations only
+/// TRANSITION: Uses .asymmetric for different insert/remove animations
 import SwiftUI
 
 /// Shows the countdown animation area.
-/// Displays numbers 3-2-1 and then "GO!" when countdown finishes.
+/// Displays numbers 4-3-2-1 and then "GO!" when countdown finishes.
 struct CountdownAnimationView: View {
-    /// Connects to our ViewModel that manages the animation state
     @Bindable var viewModel: CountdownViewModel
     
     var body: some View {
         ZStack {
-            // Show current number (3, 2, or 1)
+            // Show current number with fade-out state
             if let currentNumber = viewModel.currentNumber {
                 CountdownNumberView(
                     number: currentNumber,
                     isActive: true,
-                    isFadingOut: false
+                    isFadingOut: viewModel.currentNumberIsFadingOut
                 )
-                .transition(.opacity) // Fade in/out animation
+                .transition(
+                    .asymmetric(
+                        insertion: .scale(scale: 0.5).combined(with: .opacity),
+                        removal: .opacity.combined(with: .scale(scale: 1.5))
+                    )
+                )
+                .offset(y: -120) // Move numbers higher
             }
             
-            // Show "GO!" when countdown finishes
+            // Show GO! text
             if viewModel.showGoText {
-                GoTextView()
-                    .transition(.scale.combined(with: .opacity)) // Scale + fade animation
+                Text("GO!")
+                    .font(.system(size: 100, weight: .black, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(stops: [
+                                .init(color: .red, location: 0.0),
+                                .init(color: .orange, location: 0.25),
+                                .init(color: .red, location: 0.5),
+                                .init(color: .orange, location: 0.75),
+                                .init(color: .red, location: 1.0)
+                            ]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .shadow(color: .yellow.opacity(0.8), radius: 30)
+                    .scaleEffect(viewModel.showGoText ? 1.0 : 0.5)
+                    .opacity(viewModel.showGoText ? 1 : 0)
+                    .animation(
+                        .spring(response: 0.6, dampingFraction: 0.7),
+                        value: viewModel.showGoText
+                    )
+                    .transition(.scale.combined(with: .opacity))
+                    .offset(y: -120) // Move GO! higher
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-/// Shows the "GO!" text with a pulsing animation
-struct GoTextView: View {
-    @State private var isAnimating = false
-    
-    var body: some View {
-        Text("GO!")
-            .font(.system(size: 120, weight: .black, design: .rounded))
-            .foregroundColor(.green)
-            .scaleEffect(isAnimating ? 1.2 : 1.0) // Pulsing scale
-            .opacity(isAnimating ? 1 : 0.8)      // Pulsing opacity
-            .onAppear {
-                // Start continuous pulsing animation
-                withAnimation(
-                    .easeInOut(duration: 0.6)
-                    .repeatForever(autoreverses: true)
-                ) {
-                    isAnimating = true
-                }
-            }
     }
 }

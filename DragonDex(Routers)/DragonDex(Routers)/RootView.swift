@@ -30,7 +30,7 @@ struct RootView: View {
                 }
                 .tint(themeBackground.themeColor)
                 .sheet(isPresented: Binding(
-                    get: { mainRouter.presentedSheet == .about },
+                    get: { mainRouter.presentedSheet == .settings },
                     set: { if !$0 { mainRouter.dismissSheet() } }
                 )) {
                     SettingsView()

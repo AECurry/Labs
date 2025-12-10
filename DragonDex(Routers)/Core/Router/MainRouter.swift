@@ -23,7 +23,7 @@ final class MainRouter {
     }
     
     enum SheetType: Hashable, Identifiable {
-        case about
+        case settings
         
         var id: Self { self }
     }
