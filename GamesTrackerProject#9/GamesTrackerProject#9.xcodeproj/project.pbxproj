@@ -46,6 +46,11 @@
 			path = Shared;
 			sourceTree = "<group>";
 		};
+		4928AE732EF24B6700507762 /* ScoreKeeperView */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ScoreKeeperView;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +69,7 @@
 			children = (
 				4928ACB42EE9FF8D00507762 /* GamesTrackerProject#9 */,
 				4928ACC02EEA002C00507762 /* TournamentView */,
+				4928AE732EF24B6700507762 /* ScoreKeeperView */,
 				4928ACC22EEA005F00507762 /* AddNewGameView */,
 				4928ACC12EEA004600507762 /* PlayersView */,
 				4928ACC32EEA007100507762 /* AddNewPlayerView */,
@@ -104,6 +110,7 @@
 				4928ACC32EEA007100507762 /* AddNewPlayerView */,
 				4928ACC42EEA008000507762 /* Ranking */,
 				4928ACC52EEA00B700507762 /* Shared */,
+				4928AE732EF24B6700507762 /* ScoreKeeperView */,
 			);
 			name = "GamesTrackerProject#9";
 			packageProductDependencies = (

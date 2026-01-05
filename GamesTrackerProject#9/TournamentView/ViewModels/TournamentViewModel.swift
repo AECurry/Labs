@@ -2,210 +2,274 @@
 //  TournamentViewModel.swift
 //  GamesTrackerProject#9
 //
-//  Created by AnnElaine on 12/11/25.
-//
 
 import SwiftUI
 import SwiftData
 import Observation
 
+// MARK: - Main ViewModel with Dynamic Sorting
 @Observable
 class TournamentViewModel {
-    // MARK: - Published Properties
-    var matches: [TournamentMatch] = []
+    // MARK: - Properties
+    var games: [Game] = []
     var isLoading = false
     var errorMessage: String?
     
-    // MARK: - Computed Properties
-    var liveMatchesCount: Int {
-        matches.filter { $0.isLive }.count
-    }
-    
-    var completedMatchesCount: Int {
-        matches.filter { !$0.isLive && $0.team1Score + $0.team2Score > 0 }.count
-    }
-    
-    var upcomingMatchesCount: Int {
-        matches.filter { !$0.isLive && $0.team1Score + $0.team2Score == 0 }.count
-    }
-    
-    // MARK: - Dependencies
     private var modelContext: ModelContext
+    private var statusTimer: Timer?
+    
+    // MARK: - Computed Properties
+    /// Returns matches sorted: Live → Upcoming → Completed
+    var sortedMatches: [TournamentMatch] {
+        return games.sorted { game1, game2 in
+            // 1. Sort by display status priority
+            let priority1 = displayStatusPriority(for: game1)
+            let priority2 = displayStatusPriority(for: game2)
+            
+            if priority1 != priority2 {
+                return priority1 < priority2 // Lower number = higher in list
+            }
+            
+            // 2. Same status? Sort by date (most recent first)
+            return game1.date > game2.date
+        }
+        .map { TournamentMatch(game: $0) }
+    }
+    
+    // MARK: - Helper Methods
+    private func displayStatusPriority(for game: Game) -> Int {
+        // Games that should show as completed go to bottom
+        if game.shouldShowAsCompleted {
+            return 2 // Completed priority
+        }
+        
+        switch game.status {
+        case .live: return 0      // Highest priority - TOP
+        case .upcoming: return 1  // Middle priority
+        case .completed: return 2 // Lowest priority
+        case .postponed: return 3 // Very bottom
+        }
+    }
     
     // MARK: - Initialization
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
+        
+        // Start automatic status monitoring
+        startStatusMonitoring()
+    }
+    
+    deinit {
+        stopStatusMonitoring()
+    }
+    
+    // MARK: - Automatic Status Management
+    /// Updates all game statuses based on current time
+    private func updateGameStatuses() {
+        var needsSave = false
+        
+        for game in games {
+            let previousStatus = game.status
+            game.updateStatusBasedOnCurrentTime()
+            
+            if game.status != previousStatus {
+                needsSave = true
+                print("🔄 Game status updated: \(previousStatus.rawValue) → \(game.status.rawValue)")
+            }
+        }
+        
+        if needsSave {
+            saveContext()
+        }
+    }
+    
+    /// Start automatic status monitoring
+    private func startStatusMonitoring() {
+        // Update immediately
+        updateGameStatuses()
+        
+        // Set up timer to check every 60 seconds
+        statusTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+            self?.updateGameStatuses()
+        }
+    }
+    
+    /// Stop monitoring
+    private func stopStatusMonitoring() {
+        statusTimer?.invalidate()
+        statusTimer = nil
     }
     
     // MARK: - Data Loading
+    @MainActor
     func loadData() async {
         isLoading = true
         errorMessage = nil
         
-        // Simulate network delay for realistic UX
-        try? await Task.sleep(for: .milliseconds(300))
-        
-        await MainActor.run {
-            fetchGamesFromSwiftData()
-            
-            // If no persisted data, load sample data
-            if matches.isEmpty {
-                loadSampleData()
-            }
-            
-            isLoading = false
-        }
-    }
-    
-    func refreshData() async {
-        await loadData()
-    }
-    
-    // MARK: - SwiftData Operations
-    private func fetchGamesFromSwiftData() {
         do {
             let descriptor = FetchDescriptor<Game>(
                 sortBy: [SortDescriptor(\.date, order: .reverse)]
             )
             
-            let games = try modelContext.fetch(descriptor)
+            games = try modelContext.fetch(descriptor)
+            print("✅ Loaded \(games.count) games")
             
-            // Convert SwiftData models to display models
-            matches = games.enumerated().map { index, game in
-                TournamentMatch(
-                    id: game.id,
-                    team1Name: game.team1.name,
-                    team1Score: game.team1.score,
-                    team1Initials: String(game.team1.name.prefix(2).uppercased()),
-                    team1Color: game.team1.logoColor,
-                    team2Name: game.team2.name,
-                    team2Score: game.team2.score,
-                    team2Initials: String(game.team2.name.prefix(2).uppercased()),
-                    team2Color: game.team2.logoColor,
-                    timeRemaining: game.timeRemaining,
-                    isLive: game.status == .live,
-                    matchNumber: index + 1,
-                    gameMode: game.gameModeEnum
-                )
-            }
+            // Update statuses based on current time
+            updateGameStatuses()
+            
+            // Debug: Print sorted order
+            printSortedOrder()
             
         } catch {
             errorMessage = "Failed to load games: \(error.localizedDescription)"
-            print("❌ Fetch error: \(error)")
+            print("❌ Error loading games: \(error)")
+        }
+        
+        isLoading = false
+    }
+    
+    // MARK: - Debug Helper
+    private func printSortedOrder() {
+        print("📊 ===== SORTED ORDER =====")
+        for (index, match) in sortedMatches.enumerated() {
+            print("   \(index + 1). [\(match.statusDisplay)] \(match.team1Name) vs \(match.team2Name)")
+            if let game = findGame(by: match.id) {
+                print("       Status: \(game.status.rawValue), Scores: \(game.team1.score)-\(game.team2.score)")
+                print("       Should show as completed: \(game.shouldShowAsCompleted)")
+            }
+        }
+        print("📊 ===== END ORDER =====")
+    }
+    
+    // MARK: - Data Refresh
+    @MainActor
+    func refreshData() async {
+        updateGameStatuses()
+        await loadData()
+    }
+    
+    // MARK: - Filtering for Segmented Control
+    func matches(for status: MatchStatus) -> [TournamentMatch] {
+        switch status {
+        case .all:
+            return sortedMatches
+            
+        case .live:
+            // Only show ACTUALLY live games (not shouldShowAsCompleted)
+            return sortedMatches.filter { match in
+                guard let game = findGame(by: match.id) else { return false }
+                return !game.shouldShowAsCompleted && game.status == .live
+            }
+            
+        case .upcoming:
+            // Only show ACTUALLY upcoming games (not shouldShowAsCompleted)
+            return sortedMatches.filter { match in
+                guard let game = findGame(by: match.id) else { return false }
+                return !game.shouldShowAsCompleted && game.status == .upcoming
+            }
+            
+        case .completed:
+            // Show both actual completed AND games that should show as completed
+            return sortedMatches.filter { match in
+                guard let game = findGame(by: match.id) else { return false }
+                return game.shouldShowAsCompleted || game.status == .completed
+            }
         }
     }
     
-    private func loadSampleData() {
-        matches = TournamentMatch.sampleTournament
-        print("✅ Loaded \(matches.count) sample matches")
+    // MARK: - Game State Management
+    /// Start a game (upcoming → live)
+    func startGame(_ gameId: UUID) {
+        guard let game = games.first(where: { $0.id == gameId }) else { return }
+        
+        if game.status == .upcoming {
+            game.status = .live
+            game.date = Date() // Update date for sorting
+            saveContext()
+            print("🎮 Game STARTED: \(game.team1.name) vs \(game.team2.name)")
+        }
     }
     
-    // MARK: - CRUD Operations
-    
-    /// Deletes a match from the view model (UI only - persistence handled by view)
-    func deleteMatch(_ match: TournamentMatch) {
-        matches.removeAll { $0.id == match.id }
+    /// Complete a game (live → completed)
+    func completeGame(_ gameId: UUID) {
+        guard let game = games.first(where: { $0.id == gameId }) else { return }
+        
+        if game.status == .live {
+            game.status = .completed
+            game.timeRemaining = "0:00:00"
+            game.date = Date() // Update date for sorting
+            saveContext()
+            print("🏁 Game COMPLETED: \(game.team1.name) vs \(game.team2.name)")
+        }
     }
     
-    func addNewGame(
-        team1Name: String,
-        team1Color: Color,
-        team2Name: String,
-        team2Color: Color,
-        gameMode: GameMode = .battleRoyale,
-        isLive: Bool = false
-    ) {
-        // Create teams
-        let team1 = Team(name: team1Name, colorAssetName: team1Color.description)
-        let team2 = Team(name: team2Name, colorAssetName: team2Color.description)
+    /// Reset a game (completed → upcoming)
+    func resetGame(_ gameId: UUID) {
+        guard let game = games.first(where: { $0.id == gameId }) else { return }
         
-        // Create game
-        let game = Game(
-            date: Date(),
-            timeRemaining: isLive ? "0:15:00" : "0:00:00",
-            status: isLive ? .live : .upcoming,
-            team1: team1,
-            team2: team2,
-            gameMode: gameMode
-        )
+        if game.status == .completed {
+            game.status = .upcoming
+            game.timeRemaining = "1:00:00"
+            game.team1.score = 0
+            game.team2.score = 0
+            game.date = Date() // Reset date for upcoming sorting
+            
+            // Reset player scores
+            for playerScore in game.playerScores {
+                playerScore.score = 0
+            }
+            
+            saveContext()
+            print("🔄 Game RESET: \(game.team1.name) vs \(game.team2.name)")
+        }
+    }
+    
+    // MARK: - Delete Game
+    func deleteGame(_ gameId: UUID) {
+        guard let gameToDelete = games.first(where: { $0.id == gameId }) else { return }
         
-        // Insert into SwiftData
-        modelContext.insert(game)
+        modelContext.delete(gameToDelete)
+        games.removeAll { $0.id == gameId }
         
-        // Save context
         saveContext()
-        
-        // Reload UI
-        fetchGamesFromSwiftData()
+        print("🗑️ Game deleted")
     }
     
-    func deleteGame(at indexSet: IndexSet) {
-        for index in indexSet {
-            let matchToDelete = matches[index]
-            let matchId = matchToDelete.id
-            
-            // Find and delete from SwiftData
-            do {
-                let descriptor = FetchDescriptor<Game>(
-                    predicate: #Predicate<Game> { game in
-                        game.id == matchId
-                    }
-                )
-                
-                if let gameToDelete = try modelContext.fetch(descriptor).first {
-                    modelContext.delete(gameToDelete)
-                    saveContext()
-                }
-            } catch {
-                errorMessage = "Failed to delete game: \(error.localizedDescription)"
-                print("❌ Delete error: \(error)")
-            }
-        }
-        
-        // Reload UI
-        fetchGamesFromSwiftData()
+    // MARK: - Find Game by ID
+    func findGame(by id: UUID) -> Game? {
+        return games.first { $0.id == id }
     }
     
-    func updateScore(for matchId: UUID, team1Score: Int, team2Score: Int) {
-        do {
-            let descriptor = FetchDescriptor<Game>(
-                predicate: #Predicate<Game> { game in
-                    game.id == matchId
-                }
-            )
-            
-            if let game = try modelContext.fetch(descriptor).first {
-                game.team1.score = team1Score
-                game.team2.score = team2Score
-                saveContext()
-                fetchGamesFromSwiftData()
-            }
-        } catch {
-            errorMessage = "Failed to update score: \(error.localizedDescription)"
-            print("❌ Update error: \(error)")
-        }
-    }
-    
+    // MARK: - Save Helper
     private func saveContext() {
         do {
             try modelContext.save()
-            print("✅ Context saved successfully")
+            
+            // Force UI update
+            Task { @MainActor in
+                await refreshData()
+            }
+            
         } catch {
-            errorMessage = "Failed to save: \(error.localizedDescription)"
+            errorMessage = "Save failed: \(error.localizedDescription)"
             print("❌ Save error: \(error)")
         }
     }
     
-    // MARK: - Filtering & Sorting
-    func filterLiveMatches() -> [TournamentMatch] {
-        matches.filter { $0.isLive }
+    // MARK: - Statistics
+    func getStats() -> (live: Int, upcoming: Int, completed: Int) {
+        let liveCount = games.filter { $0.status == .live && !$0.shouldShowAsCompleted }.count
+        let upcomingCount = games.filter { $0.status == .upcoming && !$0.shouldShowAsCompleted }.count
+        let completedCount = games.filter { $0.shouldShowAsCompleted || $0.status == .completed }.count
+        
+        return (liveCount, upcomingCount, completedCount)
     }
-    
-    func filterCompletedMatches() -> [TournamentMatch] {
-        matches.filter { !$0.isLive && $0.team1Score + $0.team2Score > 0 }
-    }
-    
-    func filterUpcomingMatches() -> [TournamentMatch] {
-        matches.filter { !$0.isLive && $0.team1Score + $0.team2Score == 0 }
-    }
+}
+
+// MARK: - MatchStatus Enum
+enum MatchStatus: String, CaseIterable {
+    case all = "All"
+    case live = "Live"
+    case upcoming = "Upcoming"
+    case completed = "Completed"
 }

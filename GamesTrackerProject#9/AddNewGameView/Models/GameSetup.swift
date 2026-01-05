@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import Foundation
 
 // ═══════════════════════════════════════════════════════════
@@ -97,49 +98,3 @@ enum PlayerCount: String, CaseIterable, Identifiable {
     }
 }
 
-// ═══════════════════════════════════════════════════════════
-// STUDENT MODEL (for roster selection)
-// This could be SwiftData later, but starting simple
-// ═══════════════════════════════════════════════════════════
-
-struct Student: Identifiable, Hashable {
-    let id: UUID
-    var name: String
-    var grade: Int
-    var skillLevel: SkillLevel = .intermediate
-    
-    init(id: UUID = UUID(), name: String, grade: Int, skillLevel: SkillLevel = .intermediate) {
-        self.id = id
-        self.name = name
-        self.grade = grade
-        self.skillLevel = skillLevel
-    }
-}
-
-enum SkillLevel: String, CaseIterable {
-    case beginner = "Beginner"
-    case intermediate = "Intermediate"
-    case advanced = "Advanced"
-    case pro = "Pro"
-}
-
-// ═══════════════════════════════════════════════════════════
-// SAMPLE DATA for Testing
-// ═══════════════════════════════════════════════════════════
-
-extension Student {
-    static let sampleRoster: [Student] = [
-        Student(name: "Alex Martinez", grade: 11, skillLevel: .pro),
-        Student(name: "Jordan Lee", grade: 10, skillLevel: .advanced),
-        Student(name: "Taylor Smith", grade: 12, skillLevel: .advanced),
-        Student(name: "Casey Johnson", grade: 11, skillLevel: .intermediate),
-        Student(name: "Morgan Davis", grade: 9, skillLevel: .intermediate),
-        Student(name: "Riley Chen", grade: 10, skillLevel: .beginner),
-        Student(name: "Avery Brown", grade: 12, skillLevel: .pro),
-        Student(name: "Quinn Wilson", grade: 11, skillLevel: .advanced),
-        Student(name: "Skylar Garcia", grade: 10, skillLevel: .intermediate),
-        Student(name: "Dakota Rodriguez", grade: 9, skillLevel: .beginner),
-        Student(name: "Phoenix Martinez", grade: 12, skillLevel: .advanced),
-        Student(name: "River Thompson", grade: 11, skillLevel: .intermediate)
-    ]
-}

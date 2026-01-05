@@ -152,10 +152,11 @@ struct SwipeToDeleteCard<Content: View>: View {
             match: TournamentMatch(
                 team1Name: "Team Alpha",
                 team1Score: 15,
+                team1Initials: "TA",
                 team1Color: .blue,
                 team2Name: "Team Bravo",
                 team2Score: 12,
-                team2Color: .red,
+                team2Initials: "TB",                 team2Color: .red,
                 timeRemaining: "0:00:00",
                 isLive: false,
                 matchNumber: 1,
@@ -169,9 +170,11 @@ struct SwipeToDeleteCard<Content: View>: View {
                 match: TournamentMatch(
                     team1Name: "Team Alpha",
                     team1Score: 15,
+                    team1Initials: "TA",
                     team1Color: .blue,
                     team2Name: "Team Bravo",
                     team2Score: 12,
+                    team2Initials: "TB",
                     team2Color: .red,
                     timeRemaining: "0:00:00",
                     isLive: false,
@@ -187,9 +190,11 @@ struct SwipeToDeleteCard<Content: View>: View {
             match: TournamentMatch(
                 team1Name: "Live Match",
                 team1Score: 10,
+                team1Initials: "LM", // ADD THIS
                 team1Color: .orange,
                 team2Name: "Active Game",
                 team2Score: 8,
+                team2Initials: "AG", // ADD THIS
                 team2Color: .purple,
                 timeRemaining: "0:05:30",
                 isLive: true,
@@ -204,9 +209,11 @@ struct SwipeToDeleteCard<Content: View>: View {
                 match: TournamentMatch(
                     team1Name: "Live Match",
                     team1Score: 10,
+                    team1Initials: "LM",
                     team1Color: .orange,
                     team2Name: "Active Game",
                     team2Score: 8,
+                    team2Initials: "AG",
                     team2Color: .purple,
                     timeRemaining: "0:05:30",
                     isLive: true,

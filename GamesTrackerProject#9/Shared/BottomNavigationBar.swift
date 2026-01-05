@@ -11,8 +11,8 @@ struct BottomNavigationBar: View {
     @Binding var selectedTab: Int
     
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(0..<4) { index in
+        HStack(spacing: -32) {
+            ForEach(0..<3) { index in  // Changed from 4 to 3
                 Button(action: {
                     selectedTab = index
                 }) {
@@ -43,8 +43,7 @@ struct BottomNavigationBar: View {
         switch index {
         case 0: return "trophy.fill"
         case 1: return "person.3.fill"
-        case 2: return "flag.2.crossed.fill"
-        case 3: return "chart.bar.fill"
+        case 2: return "chart.bar.fill"
         default: return "circle"
         }
     }
@@ -53,8 +52,7 @@ struct BottomNavigationBar: View {
         switch index {
         case 0: return "Tournaments"
         case 1: return "Players"
-        case 2: return "Teams"
-        case 3: return "Ranking"
+        case 2: return "Ranking"
         default: return ""
         }
     }

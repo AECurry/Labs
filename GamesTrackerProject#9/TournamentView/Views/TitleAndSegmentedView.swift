@@ -2,8 +2,6 @@
 //  TitleAndSegmentedView.swift
 //  GamesTrackerProject#9
 //
-//  Created by AnnElaine on 12/11/25.
-//
 
 import SwiftUI
 import SwiftData
@@ -15,27 +13,11 @@ struct TitleAndSegmentedView: View {
     @State private var selectedStatus: MatchStatus = .all
     @State private var showingCreateGame = false
     
-    var filteredMatches: [TournamentMatch] {
-        switch selectedStatus {
-        case .all:
-            return viewModel.matches
-        case .live:
-            return viewModel.matches.filter { $0.isLive }
-        case .upcoming:
-            return viewModel.matches.filter { !$0.isLive && $0.team1Score == 0 }
-        case .completed:
-            return viewModel.matches.filter { !$0.isLive && $0.team1Score > 0 }
-        }
-    }
-    
     var body: some View {
-        // REMOVED NavigationStack - it adds opaque backgrounds
         ScrollView {
             VStack(spacing: 0) {
-                // Custom Navigation Bar
                 customNavigationBar
                 
-                // Segmented Control and Content
                 VStack(spacing: 20) {
                     segmentedControl
                     contentSection
@@ -43,8 +25,11 @@ struct TitleAndSegmentedView: View {
             }
             .padding(.top, 10)
         }
-        .scrollContentBackground(.hidden) // Make ScrollView transparent
-        .background(Color.clear) // Transparent background
+        .scrollContentBackground(.hidden)
+        .background(AnimatedGridBackground())
+        .navigationDestination(for: UUID.self) { gameId in
+            ScoreKeeperView(gameId: gameId)
+        }
         .task {
             await viewModel.loadData()
         }
@@ -52,15 +37,20 @@ struct TitleAndSegmentedView: View {
             await viewModel.refreshData()
         }
         .sheet(isPresented: $showingCreateGame) {
-            createGameSheet
+            AddNewGameView()
+                .onDisappear {
+                    Task {
+                        await viewModel.refreshData()
+                    }
+                }
         }
     }
     
-    // MARK: - Custom Navigation Bar
     private var customNavigationBar: some View {
         VStack(spacing: 0) {
             HStack {
                 Spacer()
+                
                 Button {
                     showingCreateGame = true
                 } label: {
@@ -86,7 +76,6 @@ struct TitleAndSegmentedView: View {
         }
     }
     
-    // MARK: - Segmented Control
     private var segmentedControl: some View {
         Picker("Match Status", selection: $selectedStatus) {
             ForEach(MatchStatus.allCases, id: \.self) { status in
@@ -98,7 +87,6 @@ struct TitleAndSegmentedView: View {
         .padding(.horizontal)
         .padding(.top, 4)
         .onAppear {
-            // Customize segmented control appearance
             let appearance = UISegmentedControl.appearance()
             appearance.selectedSegmentTintColor = UIColor(Color.fnWhite)
             appearance.setTitleTextAttributes(
@@ -113,7 +101,6 @@ struct TitleAndSegmentedView: View {
         }
     }
     
-    // MARK: - Content Section
     @ViewBuilder
     private var contentSection: some View {
         if viewModel.isLoading {
@@ -121,171 +108,145 @@ struct TitleAndSegmentedView: View {
                 .foregroundColor(.fnWhite)
                 .padding()
                 .padding(.top, 20)
+            
         } else if let error = viewModel.errorMessage {
             ErrorView(message: error)
                 .padding(.top, 20)
-        } else if filteredMatches.isEmpty {
+            
+        } else if viewModel.matches(for: selectedStatus).isEmpty {
             EmptyStateView(status: selectedStatus)
                 .padding(.top, 40)
+            
         } else {
             matchesList
         }
     }
     
-    // MARK: - Matches List with Swipe-to-Delete
+    // MARK: - Updated matchesList Property
     private var matchesList: some View {
         VStack(spacing: 16) {
-            ForEach(filteredMatches) { match in
-                SwipeToDeleteCard(
-                    match: match,
-                    onDelete: { handleDelete(match) }
-                ) {
-                    TournamentCard(match: match)
+            // When showing "All", group by status with section headers
+            if selectedStatus == .all {
+                // Get matches for each status
+                let liveMatches = viewModel.matches(for: .live)
+                let upcomingMatches = viewModel.matches(for: .upcoming)
+                let completedMatches = viewModel.matches(for: .completed)
+                
+                VStack(spacing: 24) {
+                    // Live Matches Section
+                    if !liveMatches.isEmpty {
+                        HStack {
+                            Text("🔥 LIVE MATCHES")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.fnWhite)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 8)
+                        
+                        ForEach(liveMatches) { match in
+                            matchCard(match)
+                        }
+                    }
+                    
+                    // Upcoming Matches Section
+                    if !upcomingMatches.isEmpty {
+                        HStack {
+                            Text("⏰ UPCOMING MATCHES")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.fnWhite)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 8)
+                        
+                        ForEach(upcomingMatches) { match in
+                            matchCard(match)
+                        }
+                    }
+                    
+                    // Completed Matches Section
+                    if !completedMatches.isEmpty {
+                        HStack {
+                            Text("✅ COMPLETED MATCHES")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.fnWhite)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 8)
+                        
+                        ForEach(completedMatches) { match in
+                            matchCard(match)
+                        }
+                    }
                 }
-                .padding(.horizontal)
+            } else {
+                // When filtered by specific status, show simple list
+                ForEach(viewModel.matches(for: selectedStatus)) { match in
+                    matchCard(match)
+                }
             }
         }
         .padding(.vertical)
     }
     
+    // MARK: - Individual Match Card
+    private func matchCard(_ match: TournamentMatch) -> some View {
+        NavigationLink(value: match.id) {
+            SwipeToDeleteCard(
+                match: match,
+                onDelete: { handleDelete(match) }
+            ) {
+                TournamentCard(match: match)
+                    .environment(viewModel)
+            }
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal)
+        .contextMenu {
+            // Quick actions menu
+            if match.isLive {
+                Button("Mark as Completed") {
+                    viewModel.completeGame(match.id)
+                }
+            } else if !match.hasScores {
+                Button("Start Game") {
+                    viewModel.startGame(match.id)
+                }
+            } else if match.hasScores && !match.isLive {
+                Button("Reset Game") {
+                    viewModel.resetGame(match.id)
+                }
+            }
+            
+            Divider()
+            
+            Button("Delete Match", role: .destructive) {
+                handleDelete(match)
+            }
+            .disabled(match.isLive)
+        }
+    }
+    
     // MARK: - Delete Handler
     private func handleDelete(_ match: TournamentMatch) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            viewModel.deleteMatch(match)
-        }
-        deleteFromPersistence(match)
-    }
-    
-    private func deleteFromPersistence(_ match: TournamentMatch) {
-        let matchId = match.id
-        
-        do {
-            let descriptor = FetchDescriptor<Game>(
-                predicate: #Predicate<Game> { game in
-                    game.id == matchId
-                }
-            )
-            
-            if let gameToDelete = try modelContext.fetch(descriptor).first {
-                modelContext.delete(gameToDelete)
-                try modelContext.save()
-                print("Deleted from SwiftData")
-            }
-        } catch {
-            print("SwiftData deletion error: \(error)")
-        }
-    }
-    
-    // MARK: - Create Game Sheet
-    private var createGameSheet: some View {
-        let addGameViewModel = AddGameViewModel(modelContext: modelContext)
-        
-        return AddNewGameView(viewModel: addGameViewModel)
-            .onDisappear {
-                // Reload games when sheet closes
-                Task {
-                    await viewModel.loadData()
-                }
-            }
-    }
-}
-
-// MARK: - Match Status Enum
-enum MatchStatus: String, CaseIterable {
-    case all = "All"
-    case live = "Live"
-    case upcoming = "Upcoming"
-    case completed = "Completed"
-}
-
-// MARK: - Error View
-struct ErrorView: View {
-    let message: String
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.largeTitle)
-                .foregroundColor(.orange)
-            
-            Text("Something went wrong")
-                .font(.headline)
-                .foregroundColor(.fnWhite)
-            
-            Text(message)
-                .font(.caption)
-                .foregroundColor(.fnGray2)
-                .multilineTextAlignment(.center)
-        }
-        .padding()
-        .frame(maxWidth: .infinity)
-        .background(Color.orange.opacity(0.1))
-        .cornerRadius(12)
-        .padding(.horizontal)
-    }
-}
-
-// MARK: - Empty State View
-struct EmptyStateView: View {
-    let status: MatchStatus
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: iconForStatus)
-                .font(.largeTitle)
-                .foregroundColor(.fnGray2)
-            
-            Text(messageForStatus)
-                .font(.headline)
-                .foregroundColor(.fnWhite)
-            
-            Text(subtitleForStatus)
-                .font(.caption)
-                .foregroundColor(.fnGray2)
-                .multilineTextAlignment(.center)
-        }
-        .padding()
-    }
-    
-    private var iconForStatus: String {
-        switch status {
-        case .all: return "trophy"
-        case .live: return "livephoto"
-        case .upcoming: return "clock"
-        case .completed: return "checkmark.circle"
-        }
-    }
-    
-    private var messageForStatus: String {
-        switch status {
-        case .all: return "No matches yet"
-        case .live: return "No live matches"
-        case .upcoming: return "No upcoming matches"
-        case .completed: return "No completed matches"
-        }
-    }
-    
-    private var subtitleForStatus: String {
-        switch status {
-        case .all: return "Tap the + button to create your first game!"
-        case .live: return "Check back later for live action"
-        case .upcoming: return "Upcoming matches will appear here"
-        case .completed: return "Completed matches will appear here"
+            viewModel.deleteGame(match.id)
         }
     }
 }
 
-// MARK: - Preview
 #Preview {
     let container = try! ModelContainer(
-        for: Game.self, Team.self,
+        for: Game.self, Team.self, Student.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
     let context = container.mainContext
     let viewModel = TournamentViewModel(modelContext: context)
     
-    return ZStack {
-        AnimatedGridBackground()
-        TitleAndSegmentedView(viewModel: viewModel, modelContext: context)
-    }
+    return TitleAndSegmentedView(viewModel: viewModel, modelContext: context)
 }

@@ -14,6 +14,8 @@ struct GamesTrackerProject_9App: App {
         let schema = Schema([
             Game.self,
             Team.self,
+            Student.self,
+            PlayerScore.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         

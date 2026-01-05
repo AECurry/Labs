@@ -5,8 +5,8 @@
 //  Created by AnnElaine on 12/11/25.
 //
 
-// TournamentCardModels.swift
 import SwiftUI
+import SwiftData
 
 // Display models (for UI only - NOT SwiftData)
 struct TournamentMatchup: Identifiable {
@@ -47,7 +47,7 @@ struct TeamDisplay: Identifiable {
         self.name = team.name
         self.score = team.score
         self.logoColor = team.logoColor
-        self.isWinning = team.isWinning
+        self.isWinning = false
     }
     
     // Regular init for sample data
