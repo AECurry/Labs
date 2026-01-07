@@ -58,6 +58,9 @@ struct WalkSessionCustomizationView: View {
     @AppStorage("controlButtonSize") private var controlButtonSize: Double = 70
     @AppStorage("controlIconSize") private var controlIconSize: Double = 32
     
+    // NEW: Spacing between Visualizer and Controls
+    @AppStorage("visualizerToControlsSpacing") private var visualizerToControlsSpacing: Double = 32
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -119,6 +122,12 @@ struct WalkSessionCustomizationView: View {
                         SliderRow("Bottom Padding", value: $controlsBottomPadding, 0...100)
                         SliderRow("Side Padding", value: $controlsHorizontalPadding, 20...80)
                         SliderRow("Button Spacing", value: $controlsSpacing, 20...80)
+                        
+                        // NEW: Spacing from Visualizer
+                        SliderRow("Spacing from Visualizer",
+                                 value: $visualizerToControlsSpacing,
+                                 0...100)
+                        
                         SliderRow("Button Size", value: $controlButtonSize, 50...100)
                         SliderRow("Icon Size", value: $controlIconSize, 20...48)
                     }
@@ -198,6 +207,9 @@ struct WalkSessionCustomizationView: View {
         controlsSpacing = 40
         controlButtonSize = 70
         controlIconSize = 32
+        
+        // NEW: Visualizer to Controls Spacing Default
+        visualizerToControlsSpacing = 32
     }
 }
 

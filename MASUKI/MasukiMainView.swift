@@ -10,6 +10,7 @@ import SwiftUI
 
 struct MasukiMainView: View {
     @State private var selectedTab = 0
+    @State private var sessionManager = SessionManager.shared
     
     var body: some View {
         ZStack {
@@ -31,12 +32,15 @@ struct MasukiMainView: View {
             // Navigation bar at the bottom
             VStack {
                 Spacer()
-                BottomNavBar(selectedTab: $selectedTab)
+                BottomNavBar(
+                    selectedTab: $selectedTab,
+                    sessionManager: sessionManager
+                )
             }
         }
+        .environment(sessionManager)
     }
 }
-
 
 #Preview {
     MasukiMainView()

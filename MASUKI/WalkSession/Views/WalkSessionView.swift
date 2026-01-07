@@ -5,16 +5,20 @@
 //  Created by AnnElaine on 1/4/26.
 //
 
-// Main parent file for the WalkSessionn folder
+// Main parent file for the WalkSession folder
 import SwiftUI
 
 struct WalkSessionView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = WalkSessionViewModel()
     
-    // Passed from WalkSetupView
+    // Required parameters FIRST
     let duration: DurationOption
     let music: MusicOption
+    
+    // Optional parameters LAST
+    var onBackButtonTap: (() -> Void)?
+    var onTabTap: ((Int) -> Void)?
     
     var body: some View {
         ZStack {
@@ -22,22 +26,30 @@ struct WalkSessionView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                WalkSessionHeader()
+                // Header with back button and Masuki icon
+                WalkSessionHeader(onBack: {
+                    onBackButtonTap?()
+                })
                 
+                // Title (MASUKI and pronunciation)
                 WalkSessionTitle()
                 
+                // Static image (no animation during session)
                 WalkSessionImageAreaView()
                 
+                // Timer display with countdown
                 TimerDisplayView(
                     timeString: viewModel.formattedTime,
                     isActive: viewModel.timerState == .running
                 )
                 
+                // Audio visualizer bars
                 AudioVisualizerView(
                     amplitudes: viewModel.amplitudes,
                     isActive: viewModel.isAudioPlaying
                 )
                 
+                // Playback controls
                 PlaybackControlsView(
                     timerState: viewModel.timerState,
                     onPlayPause: {
@@ -45,21 +57,23 @@ struct WalkSessionView: View {
                     },
                     onStop: {
                         viewModel.stopSession()
+                        dismiss()
                     }
                 )
                 
                 Spacer()
+                
+                // BottomNavBar - parent handles navigation
+                BottomNavBar(selectedTab: .constant(0), onTabTap: { tab in
+                    onTabTap?(tab)
+                })
             }
         }
         .navigationBarHidden(true)
         .onAppear {
-            // Start session if not already started
-            if viewModel.activeSession == nil {
-                    viewModel.startSession(duration: duration, music: music)
-                }
-            }
+            viewModel.initializeSession(duration: duration, music: music)
+        }
         .onDisappear {
-            // Save session state when leaving
             viewModel.saveSessionState()
         }
     }
@@ -68,6 +82,12 @@ struct WalkSessionView: View {
 #Preview {
     WalkSessionView(
         duration: .twentyOne,
-        music: .zenGarden
+        music: .zenGarden,
+        onBackButtonTap: {
+            print("Back button tapped")
+        },
+        onTabTap: { tab in
+            print("Tab \(tab) tapped")
+        }
     )
 }

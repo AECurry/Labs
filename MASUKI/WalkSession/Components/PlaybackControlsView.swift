@@ -8,22 +8,31 @@
 import SwiftUI
 
 struct PlaybackControlsView: View {
+    // MARK: - Positioning Controls
     @AppStorage("controlsTopPadding") private var topPadding: Double = 0
     @AppStorage("controlsBottomPadding") private var bottomPadding: Double = 40
     @AppStorage("controlsHorizontalPadding") private var horizontalPadding: Double = 40
     @AppStorage("controlsSpacing") private var spacing: Double = 40
     
+    // MARK: - Component Spacing (NEW)
+    /// Controls the spacing between the AudioVisualizer and these controls
+    @AppStorage("visualizerToControlsSpacing") private var fromVisualizerSpacing: Double = 32
+    
+    // MARK: - Button Styling
     @AppStorage("controlButtonSize") private var buttonSize: Double = 70
     @AppStorage("controlIconSize") private var iconSize: Double = 32
     
+    // MARK: - External Dependencies
     let timerState: TimerState
     let onPlayPause: () -> Void
     let onStop: () -> Void
     
+    // MARK: - Computed Properties
     var isPlaying: Bool {
         timerState == .running
     }
     
+    // MARK: - View Body
     var body: some View {
         HStack(spacing: spacing) {
             // Stop Button
@@ -35,21 +44,23 @@ struct PlaybackControlsView: View {
                 action: onStop
             )
             
-            // Play/Pause Button
+            // Play/Pause Button - SAME SIZE as stop button
             ControlButton(
                 iconName: isPlaying ? "pause.fill" : "play.fill",
-                size: buttonSize * 1.2,
-                iconSize: iconSize * 1.2,
+                size: buttonSize,
+                iconSize: iconSize,
                 color: MasukiColors.mediumJungle,
                 action: onPlayPause
             )
         }
-        .padding(.top, topPadding)
+        // Combined padding: internal top padding + spacing from visualizer
+        .padding(.top, topPadding + fromVisualizerSpacing)
         .padding(.bottom, bottomPadding)
         .padding(.horizontal, horizontalPadding)
     }
 }
 
+// MARK: - ControlButton Subview
 struct ControlButton: View {
     let iconName: String
     let size: Double
@@ -81,6 +92,7 @@ struct ControlButton: View {
     }
 }
 
+// MARK: - Preview
 #Preview {
     VStack(spacing: 20) {
         PlaybackControlsView(

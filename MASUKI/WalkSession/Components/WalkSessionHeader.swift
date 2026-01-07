@@ -14,17 +14,31 @@ struct WalkSessionHeader: View {
     @AppStorage("walkSessionHeaderIconSize") private var iconSize: Double = 40
     @AppStorage("walkSessionHeaderIconPadding") private var iconPadding: Double = 12
     
-    // No back button per your request
-    // Just minimal header space
+    // Back button action passed from parent
+    let onBack: () -> Void
     
     var body: some View {
         HStack {
+            // Back Button (left side)
+            Button(action: onBack) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(MasukiColors.carbonBlack)
+                    .padding(iconPadding)
+            }
+            .buttonStyle(.plain)
+            
             Spacer()
             
-            // Could add settings icon here if needed
-            // For now, just empty space
+            // Masuki/Kanji Icon (right side) - Display only
+            Image("KanjiMatsukiIcon")
+                .resizable()
+                .scaledToFit()
+                .frame(width: iconSize, height: iconSize)
+                .padding(iconPadding)
+                .opacity(0.8)
         }
-        .frame(height: 44) // Standard navigation bar height
+        .frame(height: 44)
         .padding(.top, topPadding)
         .padding(.bottom, bottomPadding)
         .padding(.horizontal, horizontalPadding)
@@ -32,6 +46,6 @@ struct WalkSessionHeader: View {
 }
 
 #Preview {
-    WalkSessionHeader()
+    WalkSessionHeader(onBack: {})
         .background(MasukiColors.adaptiveBackground)
 }

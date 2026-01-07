@@ -13,8 +13,8 @@ struct WalkSessionTitle: View {
     @AppStorage("walkSessionTitleHorizontalPadding") private var horizontalPadding: Double = 0
     @AppStorage("walkSessionTitleSpacing") private var spacing: Double = 4
     
-    @AppStorage("walkSessionTitleFontSize") private var fontSize: Double = 36
-    @AppStorage("walkSessionSubtitleFontSize") private var subtitleFontSize: Double = 14
+    @AppStorage("walkSessionTitleFontSize") private var fontSize: Double = 48
+    @AppStorage("walkSessionSubtitleFontSize") private var subtitleFontSize: Double = 18
     
     var body: some View {
         VStack(spacing: spacing) {

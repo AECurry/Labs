@@ -43,7 +43,8 @@ class TimerManager {
         self.onTick = onTick
         self.onComplete = onComplete
         self.totalDuration = session.durationInSeconds
-        self.remainingTime = session.remainingTime
+        self.remainingTime = session.durationInSeconds // Start from full duration
+        self.progress = 0
         
         timerState = .running
         startCombineTimer()
@@ -74,6 +75,9 @@ class TimerManager {
     func stop() {
         timerState = .stopped
         stopCombineTimer()
+        remainingTime = 0
+        progress = 0
+        updateFormattedTime()
     }
     
     // MARK: - Private Methods
