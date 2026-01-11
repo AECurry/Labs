@@ -1,0 +1,23 @@
+{
+  "images" : [
+    {
+      "filename" : "balloons-gfc258508b_640.jpg",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "balloons-gfc258508b_640 1.jpg",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "balloons-gfc258508b_640 2.jpg",
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

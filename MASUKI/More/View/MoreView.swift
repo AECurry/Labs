@@ -8,40 +8,28 @@
 import SwiftUI
 
 struct MoreView: View {
-    var body: some View {
-        MoreScreen()
-    }
-}
-
-struct MoreScreen: View {
+    @State private var settingsManager = SettingsManager.shared
+    
     var body: some View {
         ZStack {
             MasukiColors.adaptiveBackground
                 .ignoresSafeArea()
             
-            VStack {
-                Text("More")
-                    .font(.custom("Spinnaker-Regular", size: 32))
-                    .foregroundColor(MasukiColors.adaptiveText)
-                    .padding(.top, 40)
-                
-                Spacer()
-                
-                MoreContent()
-                
-                Spacer()
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header
+                    MoreScreenHeaderView()
+                    
+                    // Settings Section
+                    SettingsSectionView(
+                        isHealthKitEnabled: $settingsManager.isHealthKitEnabled
+                    )
+                    
+                    Spacer()
+                }
+                .padding(.vertical)
             }
         }
-    }
-}
-
-struct MoreContent: View {
-    var body: some View {
-        VStack(spacing: 20) {
-            ImageSelectorButton()
-            // ... other more options
-        }
-        .padding(.horizontal, 30)
     }
 }
 

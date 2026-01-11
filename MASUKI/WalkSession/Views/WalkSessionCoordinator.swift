@@ -10,37 +10,29 @@ import Observation
 
 @Observable
 class WalkSessionCoordinator {
-    var showExitConfirmation = false
-    var showSettingsConfirmation = false
+    var currentAlert: SessionAlertType? = nil
     var targetTab: Int? = nil
     
-    // Callback to parent to change tabs
     var onNavigateToTab: ((Int) -> Void)?
-    var onDismiss: (() -> Void)?
-    
-    func handleBackButtonTap() {
-        showSettingsConfirmation = true
-    }
+    var onStopSession: (() -> Void)?
     
     func handleTabTap(_ tab: Int) {
         targetTab = tab
-        showExitConfirmation = true
+        currentAlert = .exitToTab(tab)
     }
     
-    func confirmExit() {
-        if let targetTab = targetTab {
-            onNavigateToTab?(targetTab)
+    func handleStopButtonTap() {
+        currentAlert = .stopSession
+    }
+    
+    func handleConfirmation(_ alertType: SessionAlertType) {
+        switch alertType {
+        case .exitToTab(let tab):
+            onNavigateToTab?(tab)
+            
+        case .stopSession:
+            onStopSession?()
+        
         }
-        onDismiss?()
-    }
-    
-    func confirmSettings() {
-        // Assuming Settings is in More tab (tab 2)
-        onNavigateToTab?(2)
-        onDismiss?()
-    }
-    
-    func cancelNavigation() {
-        targetTab = nil
     }
 }

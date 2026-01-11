@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct MASUKIApp: App {
+    @State private var sessionManager = SessionManager.shared
+    
     var body: some Scene {
         WindowGroup {
             MasukiMainView()
+                .environment(sessionManager)
         }
     }
 }

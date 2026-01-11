@@ -13,17 +13,18 @@ struct ProgressTitle: View {
     @AppStorage("progressTitleHorizontalPadding") private var horizontalPadding: Double = 0
     @AppStorage("progressTitleSpacing") private var spacing: Double = 8
     
-    @AppStorage("progressTitleFontSize") private var fontSize: Double = 48
-    @AppStorage("progressSubtitleFontSize") private var subtitleFontSize: Double = 24
+    @AppStorage("progressTitleFontSize") private var fontSize: Double = 64
+    @AppStorage("progressSubtitleFontSize") private var subtitleFontSize: Double = 20
     
     let totalMiles: Double
     
     var body: some View {
         VStack(spacing: spacing) {
-            // Big Number Display (like your screenshot)
-            Text("\(Int(totalMiles))")
+            // Big Number Display with comma formatting
+            Text("\(formatMiles(totalMiles))")
                 .font(.custom("Spinnaker-Regular", size: fontSize))
                 .foregroundColor(MasukiColors.mediumJungle)
+                .contentTransition(.numericText())
             
             // Subtitle
             Text("Miles, and counting!")
@@ -34,4 +35,18 @@ struct ProgressTitle: View {
         .padding(.bottom, bottomPadding)
         .padding(.horizontal, horizontalPadding)
     }
+    
+    private func formatMiles(_ miles: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = ","
+        formatter.maximumFractionDigits = 0
+        
+        let number = NSNumber(value: miles)
+        return formatter.string(from: number) ?? "\(Int(miles))"
+    }
+}
+
+#Preview {
+    ProgressTitle(totalMiles: 25982.5)
 }

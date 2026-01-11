@@ -1,8 +1,8 @@
 //
-//  HealthKit.swift
+//  HealthKitManager.swift
 //  MASUKI
 //
-//  Created by AnnElaine on 1/5/26.
+//  Created by AnnElaine on 1/9/26.
 //
 
 import HealthKit

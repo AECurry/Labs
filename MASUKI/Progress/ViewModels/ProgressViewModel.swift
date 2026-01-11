@@ -17,8 +17,10 @@ final class ProgressViewModel {
     var totalTime: TimeInterval = 0
     var weeklyData: [DailyDistance] = []
     var isLoading = false
+    var showHealthKitPrompt = false
     
     private let repository: ProgressRepositoryProtocol
+    private let settingsManager = SettingsManager.shared
     
     init(repository: ProgressRepositoryProtocol = ProgressRepository()) {
         self.repository = repository
@@ -30,6 +32,18 @@ final class ProgressViewModel {
         isLoading = true
         defer { isLoading = false }
         
+        // Check HealthKit settings
+        guard settingsManager.isHealthKitEnabled else {
+            showHealthKitPrompt = true
+            return
+        }
+        
+        // Load actual data
+        await loadHealthKitData()
+    }
+    
+    @MainActor
+    private func loadHealthKitData() async {
         totalMiles = await repository.fetchTotalMiles()
         todayMiles = await repository.fetchTodayMiles()
         
@@ -39,5 +53,11 @@ final class ProgressViewModel {
         
         totalTime = await repository.fetchTotalTime()
         weeklyData = await repository.fetchWeeklyData()
+        showHealthKitPrompt = false
+    }
+    
+    func enableHealthKit() {
+        settingsManager.isHealthKitEnabled = true
+        showHealthKitPrompt = false
     }
 }

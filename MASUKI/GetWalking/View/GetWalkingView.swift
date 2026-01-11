@@ -2,37 +2,34 @@
 //  GetWalkingView.swift
 //  MASUKI
 //
-//  Created by AnnElaine on 12/31/25.
+//  Created by AnnElaine on 12/29/25.
 //
 
-//  Main parent file for the GetWalkingFolder
 import SwiftUI
 
-struct GetWalkingView: View {
-    @State private var showWalkSetup = false
-    
+struct GetWalkingViewSimple: View {
+    let onStartWalking: () -> Void
+
     var body: some View {
         ZStack {
             MasukiColors.adaptiveBackground
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 HeaderView()
                 TitleView()
                 ImageAreaView()
-                StartWalkingButton {
-                    showWalkSetup = true
-                }
                 
+                StartWalkingButton {
+                    onStartWalking()
+                }
+
                 Spacer()
             }
-        }
-        .fullScreenCover(isPresented: $showWalkSetup) {  // Changed from .sheet to .fullScreenCover
-            WalkSetupView()
         }
     }
 }
 
 #Preview {
-    GetWalkingView()
+    GetWalkingViewSimple(onStartWalking: { print("Start Walking") })
 }

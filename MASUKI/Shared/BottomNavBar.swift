@@ -10,6 +10,7 @@ import SwiftUI
 struct BottomNavBar: View {
     @Binding var selectedTab: Int
     @Environment(SessionManager.self) private var sessionManager
+    var showConfirmation: Bool = false
     var onTabTap: ((Int) -> Void)?
     
     @State private var showAlert = false
@@ -82,14 +83,14 @@ struct BottomNavBar: View {
     }
     
     private func handleTabTap(_ tab: Int) {
-        // Check if a session is active
-        if sessionManager.isSessionActive {
-            pendingTab = tab
-            showAlert = true
+        // If onTabTap callback is provided, use it directly (skip SessionManager check)
+        if let onTabTap = onTabTap {
+            onTabTap(tab)
         } else {
-            // No active session, navigate immediately
-            if let onTabTap = onTabTap {
-                onTabTap(tab)
+            // Only check SessionManager when there's no callback
+            if sessionManager.isSessionActive {
+                pendingTab = tab
+                showAlert = true
             } else {
                 selectedTab = tab
             }
