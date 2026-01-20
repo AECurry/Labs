@@ -12,9 +12,13 @@ struct ProgressBadgeArea: View {
     @AppStorage("progressBadgeTopPadding") private var topPadding: Double = 0
     @AppStorage("progressBadgeBottomPadding") private var bottomPadding: Double = 24
     @AppStorage("progressBadgeHorizontalPadding") private var horizontalPadding: Double = 0
+    
+    // Internal sizing
     @AppStorage("progressBadgeWidth") private var width: Double = 200
     @AppStorage("progressBadgeHeight") private var height: Double = 200
-    @AppStorage("progressBadgeCornerRadius") private var cornerRadius: Double = 100 // Circle
+    @AppStorage("progressBadgeCornerRadius") private var cornerRadius: Double = 100
+    
+    // Effects
     @AppStorage("progressBadgeShadowRadius") private var shadowRadius: Double = 12
     @AppStorage("progressBadgeShadowOpacity") private var shadowOpacity: Double = 0.15
     
@@ -32,7 +36,7 @@ struct ProgressBadgeArea: View {
                 .fill(MasukiColors.mediumJungle.opacity(0.1))
                 .frame(width: width, height: height)
             
-            // Badge Icon (Large Display)
+            // Badge Icon
             Image(systemName: badge.iconName)
                 .font(.system(size: 80))
                 .foregroundColor(badge.isUnlocked ?
@@ -46,7 +50,11 @@ struct ProgressBadgeArea: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title2)
                     .foregroundColor(MasukiColors.mediumJungle)
-                    .background(Circle().fill(Color.white).frame(width: 28, height: 28))
+                    .background(
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 28, height: 28)
+                    )
                     .offset(x: width * 0.35, y: -height * 0.35)
             }
         }
@@ -69,19 +77,11 @@ struct ProgressBadgeArea: View {
     }
     
     private func startAnimations() {
-        // Gentle rotation animation (slower than other screens for badges)
-        withAnimation(
-            .linear(duration: 25)
-                .repeatForever(autoreverses: false)
-        ) {
+        withAnimation(.linear(duration: 25).repeatForever(autoreverses: false)) {
             rotation = 360
         }
         
-        // Gentle pulsing scale animation
-        withAnimation(
-            .easeInOut(duration: 2.5)
-                .repeatForever(autoreverses: true)
-        ) {
+        withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
             scale = 1.15
         }
     }

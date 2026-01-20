@@ -10,7 +10,7 @@ import SwiftUI
 struct HeaderView: View {
     @AppStorage("headerTopPadding") private var topPadding: Double = 0
     @AppStorage("headerBottomPadding") private var bottomPadding: Double = 8
-    @AppStorage("headerHorizontalPadding") private var horizontalPadding: Double = 16
+    @AppStorage("headerHorizontalPadding") private var horizontalPadding: Double = 48
     @AppStorage("headerIconSize") private var iconSize: Double = 40
     @AppStorage("headerIconPadding") private var iconPadding: Double = 12
     

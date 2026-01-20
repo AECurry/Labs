@@ -23,25 +23,29 @@ struct ProgressView: View {
                 ProgressHeader()
                 
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(spacing: 0) { // NO spacing here - components control their own
                         
-                        // Name and Streak Section (using ProgressBadgeSection)
+                        // Name and Streak Section
                         ProgressBadgeSection(
-                            userName: SettingsManager.shared.userName, // Get from settings
+                            userName: SettingsManager.shared.userName,
                             streak: viewModel.currentStreak,
                             badge: getFirstUnlockedBadge()
                         )
                         
-                        // Big Miles Counter (using ProgressTitle)
-                        ProgressTitle(totalMiles: viewModel.totalMiles)
+                        // Miles/Time Counter
+                        ProgressCounter(
+                            totalMiles: viewModel.totalMiles,
+                            totalTime: viewModel.totalTime,
+                            isHealthKitEnabled: SettingsManager.shared.isHealthKitEnabled
+                        )
                         
-                        // Today Section (using TodaySectionView)
+                        // Today Section
                         TodaySectionView(todayMiles: viewModel.todayMiles)
                         
                         // Spacer for bottom padding
                         Spacer(minLength: 100)
                     }
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 24)
                 }
             }
         }
