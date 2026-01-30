@@ -39,29 +39,29 @@
 			path = Shared;
 			sourceTree = "<group>";
 		};
-		498064412F055643006E4100 /* GetWalking */ = {
+		498064412F055643006E4100 /* GetWalkingScreen */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = GetWalking;
+			path = GetWalkingScreen;
 			sourceTree = "<group>";
 		};
-		498064452F05568C006E4100 /* Progress */ = {
+		498064452F05568C006E4100 /* ProgressScreen */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Progress;
+			path = ProgressScreen;
 			sourceTree = "<group>";
 		};
-		4980644B2F0556DC006E4100 /* More */ = {
+		4980644B2F0556DC006E4100 /* MoreScreen */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = More;
+			path = MoreScreen;
 			sourceTree = "<group>";
 		};
-		498064862F08273B006E4100 /* WalkSetUp */ = {
+		498064862F08273B006E4100 /* WalkSetUpScreen */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = WalkSetUp;
+			path = WalkSetUpScreen;
 			sourceTree = "<group>";
 		};
-		498064AB2F0AA05E006E4100 /* WalkSession */ = {
+		498064AB2F0AA05E006E4100 /* WalkSessionScreen */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = WalkSession;
+			path = WalkSessionScreen;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -81,11 +81,11 @@
 			isa = PBXGroup;
 			children = (
 				498064222F053093006E4100 /* MasukiMainView.swift */,
-				498064412F055643006E4100 /* GetWalking */,
-				498064862F08273B006E4100 /* WalkSetUp */,
-				498064AB2F0AA05E006E4100 /* WalkSession */,
-				498064452F05568C006E4100 /* Progress */,
-				4980644B2F0556DC006E4100 /* More */,
+				498064412F055643006E4100 /* GetWalkingScreen */,
+				498064862F08273B006E4100 /* WalkSetUpScreen */,
+				498064AB2F0AA05E006E4100 /* WalkSessionScreen */,
+				498064452F05568C006E4100 /* ProgressScreen */,
+				4980644B2F0556DC006E4100 /* MoreScreen */,
 				4980643A2F05391F006E4100 /* Shared */,
 				4980641F2F053093006E4100 /* MASUKI */,
 				4980641E2F053093006E4100 /* Products */,
@@ -118,11 +118,11 @@
 			fileSystemSynchronizedGroups = (
 				4980641F2F053093006E4100 /* MASUKI */,
 				4980643A2F05391F006E4100 /* Shared */,
-				498064412F055643006E4100 /* GetWalking */,
-				498064452F05568C006E4100 /* Progress */,
-				4980644B2F0556DC006E4100 /* More */,
-				498064862F08273B006E4100 /* WalkSetUp */,
-				498064AB2F0AA05E006E4100 /* WalkSession */,
+				498064412F055643006E4100 /* GetWalkingScreen */,
+				498064452F05568C006E4100 /* ProgressScreen */,
+				4980644B2F0556DC006E4100 /* MoreScreen */,
+				498064862F08273B006E4100 /* WalkSetUpScreen */,
+				498064AB2F0AA05E006E4100 /* WalkSessionScreen */,
 			);
 			name = MASUKI;
 			packageProductDependencies = (

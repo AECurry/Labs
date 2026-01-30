@@ -12,178 +12,163 @@ import SwiftUI
 /// Features personalized welcome, secure input fields, and demo authentication
 /// Right now this uses simple password matching for demo purposes. In a real app, this would connect to a secure authentication system.
 
+// MARK: - Login View
 struct LoginView: View {
-    // MARK: - Properties
-    let student: Student                  // The student attempting to log in
-    @State private var email: String = "" // User's email input
-    @State private var password: String = "" // User's password input
-    @State private var showAlert = false  // Controls alert presentation
-    @State private var alertMessage = ""  // Error message for failed login
-    @State private var isAuthenticated = false // Tracks successful authentication
-    @Environment(\.dismiss) private var dismiss // Environment value for closing view
+    let student: Student
+    @State private var email: String = ""
+    @State private var password: String = ""
+    @State private var showAlert = false
+    @State private var alertMessage = ""
+    @State private var isAuthenticated = false
+    @State private var isLoading = false
+    @Environment(\.dismiss) private var dismiss
     
-    // MARK: - Body
     var body: some View {
         NavigationStack {
             ZStack {
-                // MARK: - Background Layers
-                /// Layered design with background color and watermark logo
-                
-                // 1. Background color
                 MountainlandColors.platinum.ignoresSafeArea()
                 
-                // 2. Watermark logo
-                /// Subtle branding element in background for visual appeal
                 Image("MountainlandLogo1")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 350, height: 350)
-                    .opacity(0.1)        // Very subtle for watermark effect
-                    .offset(y: 50)       // Positioned slightly lower
+                    .opacity(0.1)
+                    .offset(y: 50)
                 
-                // MARK: - Main Content
-                /// Foreground content including header, form, and buttons
                 VStack(spacing: 0) {
-                    // MARK: - Header with Back Button
-                    /// Custom navigation bar for returning to previous screen
                     HStack {
-                        Button(action: {
-                            dismiss()    // Returns to student selection
-                        }) {
+                        Button(action: { dismiss() }) {
                             Image(systemName: "chevron.left")
                                 .font(.title3)
                                 .foregroundColor(.primary)
                         }
-                        .padding(.leading, 16)  // Comfortable tap target padding
+                        .padding(.leading, 16)
                         
-                        Spacer()  // Pushes content to left edge
+                        Spacer()
                     }
-                    .padding(.top, 16)   // Safe area top padding
-                    .padding(.bottom, 8) // Small bottom padding
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
                     
-                    // MARK: - Profile Picture
-                    /// Large circular avatar showing student initials
                     ZStack {
                         Circle()
-                            .fill(MountainlandColors.burgundy2)  // Brand color
-                            .frame(width: 100, height: 100)      // Large size for prominence
+                            .fill(MountainlandColors.burgundy2)
+                            .frame(width: 100, height: 100)
                         
                         Text(student.initials)
                             .font(.title)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
                     }
-                    .padding(.top, 20)   // Extra top spacing
-                    .padding(.bottom, 16) // Bottom spacing before form
+                    .padding(.top, 20)
+                    .padding(.bottom, 16)
                     
-                    // MARK: - Scrollable Form Content
-                    /// Allows form to adjust for different screen sizes
                     ScrollView {
                         VStack(alignment: .center, spacing: 24) {
-                            // MARK: - Welcome Message
-                            /// Personalized greeting using student's first name
                             Text("Welcome back, \(student.firstName)!")
                                 .font(.title3)
                                 .fontWeight(.semibold)
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity)
-                                .padding(.bottom, 24)  // Extra spacing before form fields
+                                .padding(.bottom, 24)
                             
-                            // MARK: - Email Field
-                            /// Pre-populated with student's email for convenience
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Email")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(MountainlandColors.smokeyBlack)
                                 TextField("Email", text: $email)
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .textContentType(.emailAddress)  // iOS keyboard optimization
-                                    .autocapitalization(.none)       // Email formatting
+                                    .textContentType(.emailAddress)
+                                    .autocapitalization(.none)
                             }
-                            .padding(.horizontal, 16)  // Side margins
+                            .padding(.horizontal, 16)
                             
-                            // MARK: - Password Field
-                            /// Secure input for password protection
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Password")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(MountainlandColors.smokeyBlack)
                                 SecureField("Password", text: $password)
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .textContentType(.password)  // iOS password management
+                                    .textContentType(.password)
                             }
-                            .padding(.horizontal, 16)  // Side margins
+                            .padding(.horizontal, 16)
                             
-                            // MARK: - Forgot Password
-                            /// Placeholder for password recovery functionality
                             Button("Forgot Password?") {
-                                // Handle forgot password - future implementation
+                                // Handle forgot password
                             }
                             .font(.subheadline)
                             .foregroundColor(MountainlandColors.smokeyBlack)
-                            .frame(maxWidth: .infinity, alignment: .trailing)  // Right-aligned
+                            .frame(maxWidth: .infinity, alignment: .trailing)
                             .padding(.horizontal, 16)
-                            .padding(.bottom, 24)  // Spacing before sign-in button
+                            .padding(.bottom, 24)
                             
-                            // MARK: - Sign In Button
-                            /// Prominent button that triggers authentication
-                            Button(action: {
-                                authenticateUser()  // Validates credentials
-                            }) {
-                                Text("Sign In")
-                                    .font(.system(size: 24, weight: .semibold))
-                                    .foregroundColor(MountainlandColors.smokeyBlack)
-                                    .frame(width: 162, height: 48)  // Fixed button size
-                                    .background(MountainlandColors.white)
-                                    .cornerRadius(32)  // Pill-shaped button
-                                    .shadow(
-                                        color: .black.opacity(0.3),
-                                        radius: 6,
-                                        x: 0,
-                                        y: 4
-                                    )  // Elevated button appearance
+                            if isLoading {
+                                ProgressView()
+                                    .padding()
+                            } else {
+                                Button(action: {
+                                    authenticateUser()
+                                }) {
+                                    Text("Sign In")
+                                        .font(.system(size: 24, weight: .semibold))
+                                        .foregroundColor(MountainlandColors.smokeyBlack)
+                                        .frame(width: 162, height: 48)
+                                        .background(MountainlandColors.white)
+                                        .cornerRadius(32)
+                                        .shadow(
+                                            color: .black.opacity(0.3),
+                                            radius: 6,
+                                            x: 0,
+                                            y: 4
+                                        )
+                                }
+                                .disabled(email.isEmpty || password.isEmpty)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 16)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.top, 16)  // Top spacing from form fields
                         }
                     }
                 }
             }
-            .navigationBarHidden(true)  // Custom navigation implementation
-            // MARK: - Login Error Alert
-            /// Shows error message when authentication fails
+            .navigationBarHidden(true)
             .alert("Login Error", isPresented: $showAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(alertMessage)
             }
-            // MARK: - Navigation Destination
-            /// Automatically navigates to main app after successful login
             .navigationDestination(isPresented: $isAuthenticated) {
-                CourseSectionView(currentUser: student)  // Pass authenticated student to main app
+                CourseSectionView(currentUser: student)
             }
-            // MARK: - View Setup
-            /// Pre-populates email field when view appears
             .onAppear {
-                // Pre-populate with student email for user convenience
                 email = student.email
             }
         }
     }
     
-    // MARK: - Authentication Method
-    /// Validates user credentials against stored student data
-    /// In production, this would connect to a secure authentication service
     private func authenticateUser() {
-        if password == student.password {
-            // MARK: - Successful Login
-            /// Password matches - grant access to main application
-            isAuthenticated = true
-        } else {
-            // MARK: - Failed Login
-            /// Password doesn't match - show error message
-            alertMessage = "Invalid password. Please try again."
-            showAlert = true
+        isLoading = true
+        
+        Task {
+            do {
+                // Use the real API
+                let _ = try await APIController.shared.login(email: email, password: password)
+                
+                // Update your ViewModels to use real API
+                await MainActor.run {
+                    isLoading = false
+                    isAuthenticated = true
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    alertMessage = "Login failed: \(error.localizedDescription)"
+                    showAlert = true
+                    
+                    // Fall back to demo authentication if API fails
+                    if password == student.password {
+                        isAuthenticated = true
+                    }
+                }
+            }
         }
     }
 }

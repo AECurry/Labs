@@ -36,6 +36,11 @@
 			path = Assignments;
 			sourceTree = "<group>";
 		};
+		49C825ED2F2BC3CA0097EFB2 /* Controllers */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Controllers;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,6 +62,7 @@
 				49B7D3382EC65E3600752F61 /* Calendar */,
 				49B7D3432EC65F5B00752F61 /* Assignments */,
 				49B7D33B2EC65EB900752F61 /* Shared */,
+				49C825ED2F2BC3CA0097EFB2 /* Controllers */,
 				49566B6C2EBE613200120691 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -89,6 +95,7 @@
 				49B7D3382EC65E3600752F61 /* Calendar */,
 				49B7D33B2EC65EB900752F61 /* Shared */,
 				49B7D3432EC65F5B00752F61 /* Assignments */,
+				49C825ED2F2BC3CA0097EFB2 /* Controllers */,
 			);
 			name = TSMAMountainlandCalendar;
 			packageProductDependencies = (
@@ -105,7 +112,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					49566B6A2EBE613200120691 = {
 						CreatedOnToolsVersion = 26.0.1;
@@ -212,6 +219,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -269,6 +277,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
