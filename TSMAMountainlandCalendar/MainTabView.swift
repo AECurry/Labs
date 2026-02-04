@@ -11,53 +11,93 @@
 import SwiftUI
 
 struct MainTabView: View {
-    
     // *State Properties
     @State private var selectedTab = 0  // Tracks currently active tab (0=Today, 1=Calendar, 2=Assignments)
     
-   
+    // Get the current user from APIController
+    private var currentUser: Student? {
+        APIController.shared.currentUser
+    }
+    
     var body: some View {
-        ZStack {
-            
-            // *Global Background
-            /// Applies platinum color to entire screen behind all content
-            MountainlandColors.platinum.ignoresSafeArea()
-            
-            // *Main App Structure
-            /// Vertical stack containing header, content, and navigation
-            VStack(spacing: 0) {
+        // We should only reach here if authenticated, but check just in case
+        if currentUser != nil {
+            ZStack {
+                // *Global Background
+                MountainlandColors.platinum.ignoresSafeArea()
                 
-                // *App Header
-                /// Displays course title and term information at top of screen
-                AppHeader(
-                    title: "iOS Development",
-                    subtitle: "Fall/Spring - 25/26"
-                )
-                
-                // *Content Area
-                /// Dynamic content that changes based on selected tab
-                Group {
-                    switch selectedTab {
-                    case 0:
-                        TodayView()  // Today tab - shows daily lesson plan
-                    case 1:
-                        CalendarView()  // Calendar tab - shows monthly calendar view
-                    case 2:
-                        AssignmentAndRosterView()  // Assignments tab - shows assignments and roster
-                    default:
-                        TodayView()  // Fallback to Today view for invalid tab indices
+                // *Main App Structure
+                VStack(spacing: 0) {
+                    
+                    // *App Header
+                    AppHeader(
+                        title: "iOS Development",
+                        subtitle: "Fall/Spring - 25/26"
+                    )
+                    
+                    // *Content Area
+                    Group {
+                        switch selectedTab {
+                        case 0:
+                            // Today tab - shows daily lesson plan with calendar navigation capability
+                            TodayView(onSwitchToCalendar: {
+                                // Switch to Calendar tab when calendar icon is tapped
+                                selectedTab = 1
+                            })
+                        case 1:
+                            CalendarView()  // Calendar tab - shows monthly calendar view
+                        case 2:
+                            // UPDATED: Pass the current user to AssignmentView
+                            // Use optional binding to safely unwrap
+                            if let user = currentUser {
+                                AssignmentView(currentUser: user)
+                            } else {
+                                // Fallback view - should not happen
+                                Text("User data loading...")
+                                    .foregroundColor(.secondary)
+                            }
+                        default:
+                            // Fallback to Today view for invalid tab indices
+                            TodayView(onSwitchToCalendar: {
+                                selectedTab = 1
+                            })
+                        }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)  // Expand to fill available space
+                    
+                    // *Bottom Navigation
+                    BottomNavigationBar(
+                        selectedTab: $selectedTab,  // Two-way binding for tab selection
+                        tabs: BottomNavigationBar.mainTabs  // Predefined tab configuration
+                    )
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)  // Expand to fill available space
+            }
+            .ignoresSafeArea(.keyboard)  // Prevents keyboard from resizing the main app layout
+        } else {
+            // This is a safety fallback - show loading while we try to restore
+            VStack {
+                ProgressView("Loading user data...")
+                    .padding()
                 
-                // *Bottom Navigation
-                /// Tab navigation bar for switching between main app sections
-                BottomNavigationBar(
-                    selectedTab: $selectedTab,  // Two-way binding for tab selection
-                    tabs: BottomNavigationBar.mainTabs  // Predefined tab configuration
-                )
+                Button("Try Again") {
+                    APIController.shared.restoreSession()
+                }
+                .padding()
+                .background(MountainlandColors.burgundy1)
+                .foregroundColor(.white)
+                .cornerRadius(8)
             }
         }
-        .ignoresSafeArea(.keyboard)  // Prevents keyboard from resizing the main app layout
     }
+}
+
+// MARK: - Preview
+/// Xcode preview for design and layout testing
+#Preview {
+    // Set up a mock current user for preview
+    // Create a temporary student in APIController for preview
+    let mockStudent = Student.demoStudents[0]
+    APIController.shared.currentUser = mockStudent
+    
+    return MainTabView()
 }

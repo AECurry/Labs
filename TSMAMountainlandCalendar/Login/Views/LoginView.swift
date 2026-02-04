@@ -6,20 +6,21 @@
 //
 
 import SwiftUI
+import Foundation
 
 // MARK: - Login View
 /// Authentication screen for student login that automatically fills in their email address and shows their profile picture, then checks if the password matches.
 /// Features personalized welcome, secure input fields, and demo authentication
 /// Right now this uses simple password matching for demo purposes. In a real app, this would connect to a secure authentication system.
 
-// MARK: - Login View
 struct LoginView: View {
     let student: Student
+    let onLoginSuccess: () -> Void
+    
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
-    @State private var isAuthenticated = false
     @State private var isLoading = false
     @Environment(\.dismiss) private var dismiss
     
@@ -135,9 +136,6 @@ struct LoginView: View {
             } message: {
                 Text(alertMessage)
             }
-            .navigationDestination(isPresented: $isAuthenticated) {
-                CourseSectionView(currentUser: student)
-            }
             .onAppear {
                 email = student.email
             }
@@ -149,23 +147,55 @@ struct LoginView: View {
         
         Task {
             do {
-                // Use the real API
-                let _ = try await APIController.shared.login(email: email, password: password)
+                let response = try await APIController.shared.login(
+                    email: email,
+                    password: password
+                )
                 
-                // Update your ViewModels to use real API
+                // Log successful login details for debugging
+                print("✅ Login successful!")
+                print("   User: \(response.firstName) \(response.lastName)")
+                print("   Email: \(response.email)")
+                print("   User UUID: \(response.userUUID)")
+                print("   UserSecret (for API calls): \(response.secret)")
+                
                 await MainActor.run {
                     isLoading = false
-                    isAuthenticated = true
+                    onLoginSuccess()
                 }
+                
             } catch {
                 await MainActor.run {
                     isLoading = false
-                    alertMessage = "Login failed: \(error.localizedDescription)"
+                    
+                    // Log error details for debugging
+                    print("❌ Login failed: \(error)")
+                    
+                    // Check what type of error
+                    if let loginError = error as? LoginError {
+                        switch loginError {
+                        case .badResponse:
+                            alertMessage = "Server error. Please try again."
+                            print("   Error type: Bad server response")
+                        case .systemError:
+                            alertMessage = "Connection problem. Check your internet."
+                            print("   Error type: System/network error")
+                        }
+                    } else {
+                        alertMessage = "Login failed: \(error.localizedDescription)"
+                        print("   Error type: Unknown - \(error)")
+                    }
+                    
                     showAlert = true
                     
-                    // Fall back to demo authentication if API fails
+                    // Fallback for demo/testing, still allow login with the demo password
+                    // Remove this once your API is working!
                     if password == student.password {
-                        isAuthenticated = true
+                        print("⚠️ API failed, using demo authentication with password: \(password)")
+                        print("   Student demo password match: true")
+                        onLoginSuccess()
+                    } else {
+                        print("   Student demo password match: false")
                     }
                 }
             }

@@ -1,5 +1,5 @@
 //
-//  CalendarView.swift
+//  CalendarView.swift (FIXED VERSION)
 //  TSMAMountainlandCalendar
 //
 //  Created by AnnElaine on 11/7/25.
@@ -49,15 +49,33 @@ struct CalendarView: View {
                 /// Shows the main calendar interface with monthly grid and lesson cards
                 ScrollView {
                     VStack(spacing: 16) {
-                        // MARK: - Calendar Grid with Tappable Header
-                        /// Month view that displays the calendar grid - entire area is tappable
-                        MonthView(selectedDate: $selectedDate)
-                            .onTapGesture {
-                                // Tap anywhere on month view to switch to year picker
+                        // MARK: - Month Header with Year View Button
+                        /// NEW: Separate header that can be tapped to switch to year view
+                        HStack {
+                            Text(monthYearText)
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(MountainlandColors.smokeyBlack)
+                            
+                            Spacer()
+                            
+                            // Tappable button to switch to year view
+                            Button(action: {
                                 withAnimation {
-                                    showingYearView = true  // Show year overview
+                                    showingYearView = true
                                 }
+                            }) {
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 20, weight: .medium))
+                                    .foregroundColor(MountainlandColors.burgundy1)
                             }
+                        }
+                        .padding(.horizontal, 32)
+                        .padding(.top, 16)
+                        .padding(.bottom, 12)
+                        
+                        // MARK: - Calendar Grid WITHOUT tap gesture
+                        /// ✅ FIXED: Removed .onTapGesture so individual dates can be selected
+                        MonthView(selectedDate: $selectedDate)
                             .onChange(of: selectedDate) { oldValue, newValue in
                                 // ✅ Load content whenever selected date changes
                                 Task {
@@ -68,7 +86,6 @@ struct CalendarView: View {
                         
                         // MARK: - Selected Day's Lesson Card Stack
                         /// Displays lesson cards for the selected date below the calendar
-                        /// ✅ Now uses the persistent viewModel that updates with selectedDate
                         CalendarCardStack(todayViewModel: viewModel)
                     }
                     .padding(.top, 0)        // No top padding (header provides spacing)
@@ -82,6 +99,14 @@ struct CalendarView: View {
             viewModel.date = selectedDate
             await viewModel.loadDailyContent()
         }
+    }
+    
+    // MARK: - Computed Properties
+    /// Formats the current month and year for display (e.g., "November 2024")
+    private var monthYearText: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: selectedDate)
     }
 }
 

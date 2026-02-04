@@ -36,7 +36,7 @@ struct DateHeaderView: View {
             // MARK: - Date Text
             /// Displays the formatted date in white text
             Text(formattedDate)
-                .font(.system(size: 20, weight: .semibold))
+                .font(.system(size: 24, weight: .semibold))
                 .foregroundColor(.white)
             
             Spacer()  // Pushes calendar icon to trailing edge
@@ -45,7 +45,7 @@ struct DateHeaderView: View {
             /// Tappable calendar icon for navigation
             Button(action: onCalendarTap) {
                 Image(systemName: "calendar")
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 24, weight: .medium))
                     .foregroundColor(.white)
                     .frame(width: 56, height: 56)  // Large tap target
             }

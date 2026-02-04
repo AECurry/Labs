@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct TodaySession: Identifiable {
-    let id = UUID()
+struct TodaySession: Identifiable, Codable, Equatable {  // ← ADDED Codable, Equatable
+    let id: UUID
     let startTime: Date
     let endTime: Date
     let duration: TimeInterval
@@ -28,4 +28,8 @@ struct TodaySession: Identifiable {
         formatter.dateFormat = "h:mm a"
         return "\(formatter.string(from: startTime)) - \(formatter.string(from: endTime))"
     }
+    
+    // MARK: - Codable Implementation (Automatic with Codable protocol)
+    // SwiftUI auto-synthesizes this, but we need to make sure all properties are Codable
+    // UUID, Date, TimeInterval, Double are all Codable by default
 }

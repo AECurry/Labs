@@ -11,30 +11,52 @@ struct TodayStreakCard: View {
     let currentStreak: Int
     let longestStreak: Int
     
-    // Card styling
-    private let cornerRadius: CGFloat = 16
-    private let padding: CGFloat = 16
-    private let strokeWidth: CGFloat = 1
+    // MARK: - Design Constants
+    private let cardWidth: CGFloat = 360          // Card width
+    private let cornerRadius: CGFloat = 16        // Rounded corners
+    private let strokeWidth: CGFloat = 2          // Border thickness
+    
+    // Spacing
+    private let padding: CGFloat = 16             // Card padding on all sides
+    private let titleValueSpacing: CGFloat = 8    // Space between title and value
+    
+    // Typography
+    private let titleFontSize: CGFloat = 16       // "Current Streak", "Longest Streak"
+    private let valueFontSize: CGFloat = 32       // Streak number
+    
+    // Dividers
+    private let dividerWidth: CGFloat = 1
+    private let dividerHeight: CGFloat = 60
+    private let dividerSpacing: CGFloat = 0       // Space on both sides of divider
     
     var body: some View {
         HStack(spacing: 0) {
             // Current Streak
             StreakColumn(
                 title: "Current Streak",
-                value: currentStreak
+                value: currentStreak,
+                titleSize: titleFontSize,
+                valueSize: valueFontSize,
+                spacing: titleValueSpacing
             )
             
+            // Divider with spacing
             Divider()
-                .frame(height: 60)
+                .frame(width: dividerWidth, height: dividerHeight)
                 .background(MasukiColors.adaptiveText.opacity(0.2))
+                .padding(.horizontal, dividerSpacing)
             
             // Longest Streak
             StreakColumn(
                 title: "Longest Streak",
-                value: longestStreak
+                value: longestStreak,
+                titleSize: titleFontSize,
+                valueSize: valueFontSize,
+                spacing: titleValueSpacing
             )
         }
         .padding(padding)
+        .frame(width: cardWidth)
         .background(MasukiColors.adaptiveBackground.opacity(0.5))
         .cornerRadius(cornerRadius)
         .overlay(
@@ -47,15 +69,18 @@ struct TodayStreakCard: View {
 struct StreakColumn: View {
     let title: String
     let value: Int
+    let titleSize: CGFloat
+    let valueSize: CGFloat
+    let spacing: CGFloat
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: spacing) {
             Text(title)
-                .font(.custom("Inter-SemiBold", size: 16))
+                .font(.custom("Inter-SemiBold", size: titleSize))
                 .foregroundColor(MasukiColors.adaptiveText)
             
             Text("\(value) days")
-                .font(.custom("Inter-SemiBold", size: 32))
+                .font(.custom("Inter-SemiBold", size: valueSize))
                 .foregroundColor(MasukiColors.adaptiveText)
         }
         .frame(maxWidth: .infinity)

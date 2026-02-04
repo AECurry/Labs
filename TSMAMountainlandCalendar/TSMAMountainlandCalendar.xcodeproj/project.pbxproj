@@ -16,6 +16,11 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		497E9E342F31009C00C129A3 /* Login */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Login;
+			sourceTree = "<group>";
+		};
 		49B7D3372EC65B6100752F61 /* Today */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Today;
@@ -58,6 +63,7 @@
 			isa = PBXGroup;
 			children = (
 				49566B9D2EBE630800120691 /* MainTabView.swift */,
+				497E9E342F31009C00C129A3 /* Login */,
 				49B7D3372EC65B6100752F61 /* Today */,
 				49B7D3382EC65E3600752F61 /* Calendar */,
 				49B7D3432EC65F5B00752F61 /* Assignments */,
@@ -91,6 +97,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				497E9E342F31009C00C129A3 /* Login */,
 				49B7D3372EC65B6100752F61 /* Today */,
 				49B7D3382EC65E3600752F61 /* Calendar */,
 				49B7D33B2EC65EB900752F61 /* Shared */,

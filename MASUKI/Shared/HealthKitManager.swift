@@ -85,19 +85,70 @@ final class HealthKitManager {
                     return
                 }
                 
-                let sessions = workouts.map { workout in
-                    TodaySession(
-                        startTime: workout.startDate,
-                        endTime: workout.endDate,
-                        duration: workout.duration,
-                        distance: workout.totalDistance?.doubleValue(for: .mile()) ?? 0,
-                        calories: workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0
-                    )
+                // Process workouts asynchronously to fetch calories using new API
+                Task {
+                    let sessions = await withTaskGroup(of: TodaySession?.self) { group in
+                        for workout in workouts {
+                            group.addTask {
+                                await self.createTodaySession(from: workout)
+                            }
+                        }
+                        
+                        var sessions: [TodaySession] = []
+                        for await session in group {
+                            if let session = session {
+                                sessions.append(session)
+                            }
+                        }
+                        return sessions
+                    }
+                    
+                    continuation.resume(returning: sessions)
                 }
-                
-                continuation.resume(returning: sessions)
             }
             
+            healthStore.execute(query)
+        }
+    }
+    
+    // MARK: - Helper to create TodaySession with new HealthKit API
+    private func createTodaySession(from workout: HKWorkout) async -> TodaySession? {
+        let startTime = workout.startDate
+        let endTime = workout.endDate
+        let duration = workout.duration
+        
+        // Get distance (still available on workout object)
+        let distance = workout.totalDistance?.doubleValue(for: .mile()) ?? 0
+        
+        // Get calories using the new statisticsForType API
+        let calories = await fetchCaloriesForWorkout(workout)
+        
+        return TodaySession(
+            id: UUID(),
+            startTime: startTime,
+            endTime: endTime,
+            duration: duration,
+            distance: distance,
+            calories: calories
+        )
+    }
+    
+    // MARK: - Fetch calories for a specific workout using new API
+    private func fetchCaloriesForWorkout(_ workout: HKWorkout) async -> Double {
+        let startDate = workout.startDate
+        let endDate = workout.endDate
+        
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: caloriesType,
+                quantitySamplePredicate: predicate,
+                options: .cumulativeSum
+            ) { _, statistics, _ in
+                let calories = statistics?.sumQuantity()?.doubleValue(for: .kilocalorie()) ?? 0
+                continuation.resume(returning: calories)
+            }
             healthStore.execute(query)
         }
     }
@@ -168,6 +219,51 @@ final class HealthKitManager {
                 let calories = result?.sumQuantity()?.doubleValue(for: .kilocalorie()) ?? 0
                 continuation.resume(returning: calories)
             }
+            healthStore.execute(query)
+        }
+    }
+    // MARK: - Historical Queries (ADD TO EXISTING FILE)
+
+    /// Fetches workouts for a specific date range
+    func getWorkouts(from startDate: Date, to endDate: Date) async -> [TodaySession] {
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        let workoutPredicate = HKQuery.predicateForWorkouts(with: .walking)
+        let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [predicate, workoutPredicate])
+        
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: workoutType,
+                predicate: compoundPredicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+            ) { _, samples, error in
+                guard let workouts = samples as? [HKWorkout], error == nil else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                
+                // Process workouts asynchronously to fetch calories for each one
+                Task {
+                    let sessions = await withTaskGroup(of: TodaySession?.self) { group in
+                        for workout in workouts {
+                            group.addTask {
+                                await self.createTodaySession(from: workout)
+                            }
+                        }
+                        
+                        var sessions: [TodaySession] = []
+                        for await session in group {
+                            if let session = session {
+                                sessions.append(session)
+                            }
+                        }
+                        return sessions.sorted { $0.startTime < $1.startTime }
+                    }
+                    
+                    continuation.resume(returning: sessions)
+                }
+            }
+            
             healthStore.execute(query)
         }
     }

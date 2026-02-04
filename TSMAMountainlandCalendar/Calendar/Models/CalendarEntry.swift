@@ -173,3 +173,47 @@ extension CalendarEntry {
         return Calendar.current.date(from: components) ?? Date()
     }
 }
+
+// MARK: - API Integration Extension
+extension CalendarEntry {
+    /// Initializes a CalendarEntry model from an API response DTO
+    /// Converts server-side data transfer objects to internal application models
+    /// Handles optional values with sensible defaults for missing or null data
+    /// - Parameter dto: CalendarEntryResponseDTO containing raw API response data
+    init(from dto: CalendarEntryResponseDTO) {
+        self.init(
+            // Required date field - always present in API response
+            date: dto.date,
+            
+            // Lesson identifier with fallback for missing or holiday entries
+            lessonID: dto.lessonID?.uuidString ?? "Unknown",
+            
+            // Lesson name with default for days without scheduled instruction
+            lessonName: dto.lessonName ?? "No Lesson",
+            
+            // Main objective with empty string fallback for holidays or missing data
+            mainObjective: dto.mainObjective ?? "",
+            
+            // Reading assignments with empty string fallback
+            readingDue: dto.readingDue ?? "",
+            
+            // Convert API assignment DTOs to internal Assignment models
+            assignmentsDue: Assignment.array(from: dto.assignmentsDue),
+            
+            // Convert API assignment DTOs to internal Assignment models for new assignments
+            newAssignments: Assignment.array(from: dto.newAssignments),
+            
+            // Daily code challenge name with empty string fallback
+            codeChallenge: dto.dailyCodeChallengeName ?? "",
+            
+            // Vocabulary word of the day with empty string fallback
+            wordOfTheDay: dto.wordOfTheDay ?? "",
+            
+            // Placeholder instructor name (TODO: Populate from API if available)
+            instructor: "Instructor",
+            
+            // Placeholder lesson outline (TODO: Fetch separately if needed)
+            lessonOutline: ""
+        )
+    }
+}

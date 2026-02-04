@@ -1,5 +1,5 @@
 //
-//  Assingment.swift
+//  Assignment.swift
 //  TSMAMountainlandCalendar
 //
 //  Created by AnnElaine on 11/7/25.
@@ -28,6 +28,19 @@ struct Assignment: Identifiable, Hashable {
     /// Follows SOLID principles by encapsulating assignment categories
     enum AssignmentType: String, CaseIterable {
         case lab, project, codeChallenge, vocabQuiz, reading
+        
+        /// Converts API assignment type strings to our internal enum values
+        /// Ensures consistent type mapping between server and client
+        static func from(apiType: String) -> AssignmentType {
+            switch apiType.lowercased() {
+            case "lab": return .lab
+            case "project": return .project
+            case "codechallenge", "challenge": return .codeChallenge
+            case "quiz", "vocabquiz": return .vocabQuiz
+            case "reading": return .reading
+            default: return .lab // Default fallback for unknown types
+            }
+        }
     }
     
     // MARK: - Computed Properties
@@ -52,6 +65,40 @@ struct Assignment: Identifiable, Hashable {
     }
 }
 
+// MARK: - API Integration
+/// Local DTO definition since AssignmentResponseDTO is in a different module
+/// This acts as a bridge between the API response and our internal model
+private struct APIAssignmentDTO {
+    let id: UUID
+    let name: String
+    let assignmentType: String
+    let body: String
+    let dueOn: Date
+    let userProgress: String?
+}
+
+extension Assignment {
+    /// Converts an API response DTO to our internal Assignment model
+    /// Acts as a bridge between server data format and our app's data structure
+    static func from(apiData: (id: UUID, name: String, assignmentType: String, body: String, dueOn: Date, userProgress: String?)) -> Assignment {
+        return Assignment(
+            assignmentID: apiData.id.uuidString,
+            title: apiData.name,
+            dueDate: apiData.dueOn,
+            lessonID: apiData.id.uuidString, // Using assignment ID as fallback for lesson ID
+            assignmentType: AssignmentType.from(apiType: apiData.assignmentType),
+            markdownDescription: apiData.body,
+            completionDate: apiData.userProgress == "complete" ? Date() : nil
+        )
+    }
+    
+    /// Converts an array of API response data to our internal Assignment models
+    /// Enables bulk data conversion for efficient API integration
+    static func from(apiDataArray: [(id: UUID, name: String, assignmentType: String, body: String, dueOn: Date, userProgress: String?)]) -> [Assignment] {
+        return apiDataArray.map { from(apiData: $0) }
+    }
+}
+
 // MARK: - Placeholder Data
 extension Assignment {
     /// Sample assignment for previews, testing, and development
@@ -65,4 +112,25 @@ extension Assignment {
         markdownDescription: "# Function Practice Lab\n\nPractice writing functions in Swift.",
         completionDate: nil
     )
+}
+
+// MARK: - API Integration Extension
+extension Assignment {
+    init(from dto: AssignmentResponseDTO) {
+        let completionDate: Date? = dto.userProgress == "complete" ? Date() : nil
+        
+        self.init(
+            assignmentID: dto.id.uuidString,
+            title: dto.name,
+            dueDate: dto.dueOn,
+            lessonID: dto.id.uuidString,
+            assignmentType: AssignmentType.from(apiType: dto.assignmentType),
+            markdownDescription: dto.body,
+            completionDate: completionDate
+        )
+    }
+    
+    static func array(from dtos: [AssignmentResponseDTO]) -> [Assignment] {
+        dtos.map { Assignment(from: $0) }
+    }
 }

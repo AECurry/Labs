@@ -8,13 +8,16 @@
 import SwiftUI
 
 struct ProgressCounter: View {
-    @AppStorage("progressCounterTopPadding") private var topPadding: Double = 40
+    @AppStorage("progressCounterTopPadding") private var topPadding: Double = 16
     @AppStorage("progressCounterBottomPadding") private var bottomPadding: Double = 0
     @AppStorage("progressCounterHorizontalPadding") private var horizontalPadding: Double = 0
     @AppStorage("progressCounterSpacing") private var spacing: Double = 8
+    @AppStorage("progressCounterFontSize") private var fontSize: Double = 80
+    @AppStorage("progressCounterSubtitleFontSize") private var subtitleFontSize: Double = 24
     
-    @AppStorage("progressCounterFontSize") private var fontSize: Double = 64
-    @AppStorage("progressCounterSubtitleFontSize") private var subtitleFontSize: Double = 20
+    
+    // MARK: - Design Constants (ADD THIS SECTION)
+    private let cardWidth: CGFloat = 360  // <- Consistent width
     
     let totalMiles: Double
     let totalTime: TimeInterval
@@ -29,23 +32,32 @@ struct ProgressCounter: View {
                     .font(.custom("Spinnaker-Regular", size: fontSize))
                     .foregroundColor(MasukiColors.mediumJungle)
                     .contentTransition(.numericText())
+                    .multilineTextAlignment(.center)  // ← ADD THIS LINE
+                    .frame(maxWidth: .infinity)       // ← ADD THIS LINE
                 
                 Text("Miles, and counting!")
                     .font(.custom("Inter-Regular", size: subtitleFontSize))
-                    .foregroundColor(MasukiColors.coffeeBean)
+                    .foregroundColor(MasukiColors.carbonBlack)
+                    .multilineTextAlignment(.center)  // ← ADD THIS LINE
+                    .frame(maxWidth: .infinity)       // ← ADD THIS LINE
             } else {
                 // Show time when HealthKit is disabled
                 Text("\(formatTime(totalTime))")
                     .font(.custom("Spinnaker-Regular", size: fontSize))
                     .foregroundColor(MasukiColors.mediumJungle)
                     .contentTransition(.numericText())
+                    .multilineTextAlignment(.center)  // ← ADD THIS LINE
+                    .frame(maxWidth: .infinity)       // ← ADD THIS LINE
                 
                 Text("Minutes, and counting!")
                     .font(.custom("Inter-Regular", size: subtitleFontSize))
-                    .foregroundColor(MasukiColors.coffeeBean)
+                    .foregroundColor(MasukiColors.carbonBlack)
+                    .multilineTextAlignment(.center)  // ← ADD THIS LINE
+                    .frame(maxWidth: .infinity)       // ← ADD THIS LINE
             }
         }
-        .padding(.top, topPadding) 
+        .frame(width: cardWidth)  // ← ADD THIS LINE to constrain width
+        .padding(.top, topPadding)
         .padding(.bottom, bottomPadding)
         .padding(.horizontal, horizontalPadding)
     }

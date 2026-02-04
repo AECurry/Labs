@@ -8,86 +8,118 @@
 import SwiftUI
 
 // MARK: - Course Section View
-/// Main screen displaying all course sections with navigation to assignment lists
-/// Serves as the entry point for students to access assignments by course module
-/// Each course section is shown as a tappable card that takes them to the assignment list for that specific course.
-/// This is essentially the "course catalog" screen that organizes the student's entire curriculum into manageable sections they can explore.
+/// Simple view that shows course sections as cards
+/// Each card navigates to the assignment list for that section
+/// Provides navigation interface for accessing assignments by course section
+/// Uses API-based ViewModel for real assignment data retrieval
 struct CourseSectionView: View {
     // MARK: - Properties
-    @State private var sections = CourseSection.demoData  // Loads sample course sections
-    @Environment(\.dismiss) private var dismiss           // Environment value for closing view
-    let currentUser: Student                              // The student viewing the sections
+    
+    /// Sample course section data for navigation interface
+    /// Provides structured access to different course modules and topics
+    @State private var sections = CourseSection.demoData
+    
+    /// ViewModel instance managing assignment data loading and state
+    /// Uses @State wrapper for @Observable ViewModel with reactive updates
+    /// Fetches real assignment data from API for display in assignment lists
+    @State private var viewModel = AssignmentsViewModel()
+    
+    /// Environment value for programmatic view dismissal
+    /// Enables back navigation without relying on navigation stack alone
+    @Environment(\.dismiss) private var dismiss
+    
+    /// Current authenticated student for personalized display
+    /// Provides user context for assignment filtering and display preferences
+    let currentUser: Student
     
     // MARK: - Body
+    /// Main view hierarchy defining course section navigation interface
+    /// Organizes content with custom header, title, and scrollable section cards
+    /// Implements navigation to assignment lists with filtered content
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // MARK: - Header with Profile and Back Button
-                /// Custom navigation bar with back button and user profile
+                /// Custom navigation bar with back functionality and user profile
+                /// Provides consistent navigation pattern across the application
                 HStack {
-                    // MARK: - Back Button
-                    /// Returns to previous screen when tapped
+                    // Back button for returning to previous screen
                     Button(action: { dismiss() }) {
                         Image(systemName: "chevron.left")
                             .font(.title3)
                             .foregroundColor(.primary)
                     }
-                    .padding(.leading, 8)  // Extra padding for comfortable tapping
+                    .padding(.leading, 8)
                     
-                    Spacer()  // Pushes profile to trailing edge
+                    Spacer()
                     
-                    // MARK: - User Profile Circle
-                    /// Displays student initials in branded circular avatar
+                    // User Profile Circle with student initials
+                    /// Visual representation of current user in navigation header
+                    /// Uses brand colors for consistent visual identity
                     ZStack {
                         Circle()
-                            .fill(MountainlandColors.burgundy2)  // Brand color background
-                            .frame(width: 40, height: 40)        // Fixed size for consistency
+                            .fill(MountainlandColors.burgundy2)
+                            .frame(width: 40, height: 40)
                         
                         Text(currentUser.initials)
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
                     }
-                    .padding(.trailing, 8)  // Side padding for visual balance
-                    
+                    .padding(.trailing, 8)
                 }
-                .padding(.horizontal, 16)  // Side margins for header content
-                .padding(.top, 16)         // Top safe area padding
-                .padding(.bottom, 32)      // Extra bottom padding for visual separation
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 32)
                 
                 // MARK: - Screen Title
-                /// Clear label indicating this screen's purpose
+                /// Clear page title indicating content purpose and scope
+                /// Uses prominent typography for easy identification
                 Text("Course Assignments")
                     .font(.title2)
                     .fontWeight(.bold)
-                    .frame(maxWidth: .infinity)  // Centers text within available width
-                    .padding(.bottom, 40)        // Substantial padding before content
+                    .frame(maxWidth: .infinity)
+                    .padding(.bottom, 40)
                 
                 // MARK: - Course Sections Content
-                /// Scrollable list of all available course sections
+                /// Scrollable list of course section cards with navigation links
+                /// Each card represents a different course module or topic area
+                /// Tapping any card navigates to filtered assignment list for that section
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 16) {
-                        // MARK: - Course Section Cards
-                        /// Creates a navigable card for each course section
                         ForEach(sections) { section in
                             NavigationLink {
-                                // MARK: - Navigation Destination
-                                /// Shows assignment list when section card is tapped
+                                // Navigation destination: Assignment list filtered by section
+                                /// Passes all assignments since section-based filtering isn't implemented
+                                /// Future enhancement: Implement section-specific assignment filtering
                                 AssignmentListView(
                                     currentUser: currentUser,
-                                    courseSection: section.toCurriculumModule()  // Converts to assignment format
+                                    assignments: viewModel.assignments
                                 )
                             } label: {
-                                // MARK: - Section Card Display
-                                /// Uses CourseSectionCard in static mode (no onTap needed)
-                                CourseSectionCard(section: section, onTap: nil)  // NavigationLink handles tapping
+                                // Course section card visual representation
+                                /// Uses reusable CourseSectionCard component with consistent styling
+                                CourseSectionCard(section: section, onTap: nil)
                             }
-                            .padding(.horizontal, 16)  // Side padding for card alignment
+                            .padding(.horizontal, 16)
                         }
                     }
                 }
             }
-            .background(MountainlandColors.platinum.ignoresSafeArea())  // Page background color
-            .navigationBarHidden(true)  // Hides default navigation bar for custom implementation
+            .background(MountainlandColors.platinum.ignoresSafeArea())
+            .navigationBarHidden(true)
+        }
+        .task {
+            // Load assignments when view appears
+            /// Triggers asynchronous API call to fetch assignment data
+            /// Provides data for assignment lists accessed through navigation
+            await viewModel.loadAssignments()
         }
     }
+}
+
+// MARK: - Preview
+/// Xcode preview for design and layout testing during development
+/// Provides live preview with sample student data and interaction simulation
+#Preview {
+    CourseSectionView(currentUser: Student.demoStudents[0])
 }

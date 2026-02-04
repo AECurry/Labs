@@ -1,5 +1,5 @@
 //
-//  CalendarCardStack.swift
+//  CalendarCardStack.swift (FIXED)
 //  TSMAMountainlandCalendar
 //
 //  Created by AnnElaine on 11/10/25.
@@ -43,7 +43,8 @@ struct CalendarCardStack: View {
             }
             // MARK: - Error State
             /// Shows error message if lesson data fails to load
-            else if let error = todayViewModel.error {
+            /// ✅ FIXED: Changed from .error to .errorMessage
+            else if let error = todayViewModel.errorMessage {
                 CardView(
                     emoji: "⚠️",
                     title: "Error Loading Lesson",

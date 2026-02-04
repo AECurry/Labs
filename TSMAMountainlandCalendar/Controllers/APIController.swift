@@ -2,217 +2,168 @@
 //  APIController.swift
 //  TSMAMountainlandCalendar
 //
-//  Created by AnnElaine on 1/29/26.
+//  Created by AnnElaine on 1/30/26.
 //
-
-// MARK: - API Controller: The App's Communication Hub
-/// This is the brain that connects our app to the internet - it's like the app's personal messenger that knows how to talk to the server.
-/// It handles student login, fetches lesson plans from the calendar, and sends feedback to teachers.
-/// Follows the Single Responsibility Principle - only handles network communication, nothing else.
 
 import Foundation
 
-// MARK: - API Service Protocol
-/// Defines what communication methods our app needs from the server.
-/// Think of this as a contract that says "If you want to be our server messenger, you must know how to do these four things."
-protocol CalendarAndTodayAPIService {
-    /// Ask the server for today's lesson plan
-    func fetchDailyContent(for date: Date) async throws -> CalendarEntry?
-    
-    /// Get ALL the lessons for the whole calendar (for monthly view)
-    func fetchAllEntries() async throws -> [CalendarEntry]
-    
-    /// Log a student in with their email and password
-    func login(email: String, password: String) async throws -> AuthResponse
-    
-    /// Send feedback about a lesson to the teacher
-    func submitFeedback(lessonID: String, whatWentWell: String, stillConfused: String, suggestions: String) async throws
+// MARK: - Login Models (Keep these here since they're small)
+struct LoginResponse: Codable {
+    let firstName: String
+    let lastName: String
+    let email: String
+    let userUUID: UUID
+    let secret: UUID  // This is the userSecret for API calls!
+    let userName: String
 }
 
-// MARK: - Network Error Enum
-/// Special error types for internet problems - helps us know exactly what went wrong.
-/// This is like having different error codes for "wrong password" vs "server is down" vs "internet disconnected"
-enum APIError: Error {
-    case invalidURL               // The web address we tried to use was broken
-    case invalidResponse          // Server replied with garbage (not proper HTTP)
-    case statusCode(Int)          // Server said "no" with a specific error number (404, 500, etc.)
-    case decodingError(String)    // Server sent data, but we couldn't understand it
-    case noData                   // Server replied but with empty hands
-    case unauthorized             // "You're not allowed here!" (usually wrong password)
-    case networkError(Error)      // General internet problem (no connection, timeout)
-}
-
-// MARK: - Authentication Model
-/// What the server sends back when a student logs in successfully.
-/// This is like getting your student ID card after showing your credentials at the front desk.
-struct AuthResponse: Codable {
-    let userUUID: String      // Your unique student number in the system
-    let secret: String        // Special key that proves who you are for future requests
-    let lastName: String      // Your last name for personalization
-    let email: String         // Your email address (used for login)
-    let firstName: String     // Your first name for greetings
-    let userName: String      // Your username in the system
-}
-
-// MARK: - Calendar Data Models (These should match your API response)
-/// How the server describes a single day's lesson plan.
-/// This is the raw format that comes from the internet before we clean it up for our app.
-struct CalendarAPIDay: Codable, Identifiable {
-    let id: String                    // Unique day identifier from server
-    let date: String                  // Lesson date in computer-friendly ISO format
-    let lessonID: String              // Which lesson this is (e.g., "TT14")
-    let lessonName: String            // Human-readable lesson title
-    let mainObjective: String         // What students should learn today
-    let readingDue: String            // Reading assignments
-    let assignmentsDue: [APIAssignment] // Homework due today
-    let newAssignments: [APIAssignment] // New homework assigned today
-    let codeChallenge: String         // Daily coding practice
-    let wordOfTheDay: String          // Vocabulary term
-    let instructor: String            // Teacher's name
-    let lessonOutline: String         // Detailed lesson plan in markdown
-}
-
-/// How the server describes a single assignment.
-/// This gets converted to our app's Assignment model for use in cards and lists.
-struct APIAssignment: Codable {
-    let assignmentID: String          // Server's ID for this assignment
-    let title: String                 // What the assignment is called
-    let dueDate: String               // When it's due (ISO format)
-    let lessonID: String              // Which lesson it belongs to
-    let assignmentType: String        // "lab", "project", "codeChallenge", etc.
-    let markdownDescription: String   // Full instructions with formatting
-    let completionDate: String?       // When student finished it (or nil if not done)
-}
-
-/// Container for multiple calendar days from the server.
-/// The server sends back a bundle of days, not just one at a time.
-struct CalendarAPIResponse: Codable {
-    let calendarEntries: [CalendarAPIDay]  // Array of lesson days
+enum LoginError: Error {
+    case badResponse
+    case systemError
 }
 
 // MARK: - Main API Controller
-/// The actual messenger that talks to the server. Implements all four required methods.
-/// Uses a smart "mock mode" for testing without internet - perfect for development!
-class APIController: CalendarAndTodayAPIService {
+class APIController {
     // MARK: - Singleton Instance
-    /// There's only one messenger for the whole app - everyone uses this same instance.
-    /// This prevents confusion and keeps our authentication consistent.
     static let shared = APIController()
     
     // MARK: - Configuration Properties
-    /// The main address of our school's server where all the data lives.
-    /// Using default internal access - accessible to all files in the same module (app)
     let baseURL = "https://social-media-app.ryanplitt.com"
     
-    /// Secret key we get after logging in - we show this to prove who we are.
-    /// Like keeping your student ID in your pocket after checking in.
-    /// Using default internal access - can be read and written by all files in the module
-    var authToken: String?
+    /// Store the userSecret (UUID) from login
+    var userSecret: UUID?
+    var cohort: String = "fall2025"
     
-    /// Development flag - when true, uses fake data instead of real internet calls.
-    /// Perfect for testing on the bus or when the server is being repaired!
-    var useMockData = false
+    // ADD THIS: Store the current logged-in student
+    var currentUser: Student?
     
     // MARK: - Private Initializer
-    /// Only APIController can create itself - this enforces the singleton pattern.
-    /// Prevents accidentally creating multiple messengers that get out of sync.
     private init() {}
     
-    // MARK: - Authentication
-    /// Logs a student into the system with their email and password.
-    /// This is the digital version of showing your ID at the school entrance.
-    /// - Parameters:
-    ///   - email: Student's registered email address
-    ///   - password: Student's secret password
-    /// - Returns: AuthResponse with user info and authentication token
-    /// - Throws: APIError if login fails (wrong password, server down, etc.)
-    func login(email: String, password: String) async throws -> AuthResponse {
-        // Check if we should use fake data for testing
-        if useMockData {
-            return try await mockLogin(email: email, password: password)
-        }
+    // MARK: - Login Method
+    func login(email: String, password: String) async throws -> LoginResponse {
+        let url = URL(string: "\(baseURL)/auth/login")!
         
-        // Build the URL for the login endpoint
-        let endpoint = "/auth/login"
-        let urlString = baseURL + endpoint
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "email", value: email),
+            URLQueryItem(name: "password", value: password)
+        ]
         
-        // Make sure the URL is valid (safety check)
-        guard let url = URL(string: urlString) else {
-            throw APIError.invalidURL
-        }
-        
-        // Create the login data (email + password) as JSON
-        let loginData = ["email": email, "password": password]
-        let jsonData = try JSONSerialization.data(withJSONObject: loginData)
-        
-        // Prepare the HTTP request
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"  // We're sending data to the server
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = jsonData  // Attach our login credentials
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
         
-        // Send the request and wait for response (async/await makes this clean!)
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        // Check if we got a proper HTTP response
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
+        if let queryString = components.percentEncodedQuery {
+            request.httpBody = queryString.data(using: .utf8)
         }
         
-        // Check if login was successful (200-299 = good, 401 = wrong password)
-        guard (200...299).contains(httpResponse.statusCode) else {
-            if httpResponse.statusCode == 401 {
-                throw APIError.unauthorized  // "Wrong password!"
-            }
-            throw APIError.statusCode(httpResponse.statusCode)  // Some other server error
+        print("Login request to: \(url.absoluteString)")
+        
+        let (data, urlResponse) = try await URLSession.shared.data(for: request)
+        
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("Server response: \(responseString)")
         }
         
-        // Try to understand the server's response
-        let decoder = JSONDecoder()
+        guard let httpResponse = urlResponse as? HTTPURLResponse else {
+            print("Invalid server response")
+            throw LoginError.systemError
+        }
+        
+        print("Status code: \(httpResponse.statusCode)")
+        
+        guard httpResponse.statusCode == 200 else {
+            print("Server returned error status: \(httpResponse.statusCode)")
+            throw LoginError.badResponse
+        }
+        
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+        jsonDecoder.dateDecodingStrategy = .iso8601
+        
         do {
-            let authResponse = try decoder.decode(AuthResponse.self, from: data)
-            // Store the secret token for future requests - like keeping your student ID
-            self.authToken = authResponse.secret
-            return authResponse
+            let response = try jsonDecoder.decode(LoginResponse.self, from: data)
+            
+            // Store the userSecret
+            self.userSecret = response.secret
+            print("Login successful! UserSecret: \(response.secret)")
+            print("User: \(response.firstName) \(response.lastName)")
+            
+            // ADD THIS: Find and store the matching student
+            if let student = Student.demoStudents.first(where: { $0.email == email }) {
+                self.currentUser = student
+                print("Found matching student: \(student.name)")
+            } else {
+                print("Warning: No matching student found for email: \(email)")
+            }
+            
+            saveSession()
+            
+            return response
         } catch {
-            throw APIError.decodingError("Failed to decode auth response: \(error)")
+            print("Failed to decode login response: \(error)")
+            print("Response data: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
+            throw error
         }
     }
     
-    // MARK: - Utility Methods (App Lifecycle)
-    /// Logs the user out by clearing their authentication token.
-    /// Like throwing away your student ID when you leave the building.
-    func logout() {
-        authToken = nil
-    }
+    // MARK: - Session Persistence
+    private let userSecretKey = "savedUserSecret"
+    private let cohortKey = "savedCohort"
+    private let currentUserEmailKey = "savedCurrentUserEmail" // ADD THIS
     
-    /// Checks if a user is currently logged in.
-    /// Quick way to see if we have permission to make requests.
-    var isAuthenticated: Bool {
-        return authToken != nil
-    }
-    
-    /// Manually sets an authentication token (for testing or special cases).
-    func setAuthToken(_ token: String) {
-        authToken = token
-    }
-    
-    // MARK: - Mock Login Helper
-    /// Fake login for testing without internet or server access.
-    /// Always succeeds with sample Ann Curry data from your screenshot!
-    /// Using internal access so implementation file can use it
-    func mockLogin(email: String, password: String) async throws -> AuthResponse {
-        // Simulate network delay (makes it feel real!)
-        try await Task.sleep(nanoseconds: 500_000_000) // Half-second delay
+    func saveSession() {
+        if let userSecret = userSecret {
+            UserDefaults.standard.set(userSecret.uuidString, forKey: userSecretKey)
+        }
+        UserDefaults.standard.set(cohort, forKey: cohortKey)
         
-        // For demo purposes, accept any password
-        return AuthResponse(
-            userUUID: "1A4FD60D-A92C-434D-90BF-89572CAA5C7B",
-            secret: "C289C852-9FAC-447C-B0A7-AE9094B73636",
-            lastName: "Curry",
-            email: email,
-            firstName: "Ann-Elaine",
-            userName: "ann-elaine.curry"
-        )
+        // ADD THIS: Save the current user's email
+        if let currentUser = currentUser {
+            UserDefaults.standard.set(currentUser.email, forKey: currentUserEmailKey)
+        }
+        
+        print("Session saved to UserDefaults")
+    }
+    
+    func restoreSession() {
+        // Restore userSecret and cohort
+        if let savedSecret = UserDefaults.standard.string(forKey: userSecretKey),
+           let uuid = UUID(uuidString: savedSecret) {
+            userSecret = uuid
+        }
+        if let savedCohort = UserDefaults.standard.string(forKey: cohortKey) {
+            cohort = savedCohort
+        }
+        
+        // ADD THIS: Restore current user from email
+        if let savedEmail = UserDefaults.standard.string(forKey: currentUserEmailKey),
+           let student = Student.demoStudents.first(where: { $0.email == savedEmail }) {
+            currentUser = student
+            print("Restored current user: \(student.name)")
+        }
+        
+        print("Session restored from UserDefaults")
+    }
+    
+    func clearSession() {
+        userSecret = nil
+        currentUser = nil
+        UserDefaults.standard.removeObject(forKey: userSecretKey)
+        UserDefaults.standard.removeObject(forKey: cohortKey)
+        UserDefaults.standard.removeObject(forKey: currentUserEmailKey)
+        print("Session cleared")
+    }
+    
+    // MARK: - Utility Methods
+    func logout() {
+        clearSession()
+        print("User logged out")
+    }
+    
+    var isAuthenticated: Bool {
+        return userSecret != nil
     }
 }

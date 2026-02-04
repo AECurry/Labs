@@ -6,261 +6,224 @@
 //
 
 import Foundation
-import SwiftUI
 import Observation
 
-// MARK: - Curriculum Module
-/// This file creates the "brain" behind the assignments screen.
-/// It organizes assignments into course modules, tracks completion progress, handles navigation between screens, and lets students mark assignments as complete.
-/// It's like a smart assignment tracker that knows where everything is and how much work you have left.
-struct CurriculumModule: Identifiable, Hashable {
-    // MARK: - Core Properties
-    let id: String                      // Module identifier (e.g., "01", "02")
-    let title: String                   // Module name (e.g., "Swift Fundamentals")
-    let dateRange: String               // When this module runs (e.g., "Aug 13 - Sept 31")
-    var assignmentTypes: [AssignmentTypeSummary] // Assignment categories in this module
-    
-    // MARK: - Helper Methods
-    /// Finds a specific assignment category by its identifier
-    /// Returns nil if no matching assignment type is found
-    func assignmentType(withId id: String) -> AssignmentTypeSummary? {
-        assignmentTypes.first { $0.id == id }
-    }
-}
-
-// MARK: - Assignment Type Summary
-/// Tracks progress for a category of assignments (e.g., Labs, Code Challenges)
-/// Provides completion statistics and manages assignment collections
-struct AssignmentTypeSummary: Identifiable, Hashable {
-    // MARK: - Core Properties
-    let id: String              // Category identifier (e.g., "labs", "challenges")
-    let title: String           // Display name (e.g., "Labs & Projects")
-    var completedCount: Int     // Number of completed assignments in this category
-    let totalCount: Int         // Total number of assignments in this category
-    var assignments: [Assignment] // Individual assignments in this category
-    
-    // MARK: - Computed Properties
-    /// Calculates completion percentage for progress displays
-    /// Returns 0 if there are no assignments in the category
-    var completionPercentage: Double {
-        totalCount > 0 ? Double(completedCount) / Double(totalCount) : 0
-    }
-    
-    /// Determines if all assignments in this category are complete
-    var isComplete: Bool {
-        completedCount == totalCount && totalCount > 0
-    }
-    
-    // MARK: - Update Methods
-    /// Recalculates completion count based on actual assignment completion status
-    /// Ensures completion count stays synchronized with assignment data
-    mutating func updateCompletionCount() {
-        completedCount = assignments.filter { $0.isCompleted }.count
-    }
-}
-
-// MARK: - Main Assignments ViewModel
-/// Manages assignment data, navigation, and completion state across the app
-/// Uses SwiftUI Observation for reactive state updates
+// MARK: - Assignments ViewModel
+/// Manages curriculum modules, assignment categories, and completion tracking
+/// Provides navigation state and assignment organization for the assignments section
+/// Uses @Observable for reactive UI updates following MVVM architecture
+/// Integrates with APIController for real assignment data from the server
 @Observable
 class AssignmentsViewModel {
-    // MARK: - Published Properties
-    var curriculumModules: [CurriculumModule] = []      // All course modules with assignments
-    var selectedModule: CurriculumModule?               // Currently viewed module
-    var selectedAssignmentType: AssignmentTypeSummary?  // Currently viewed assignment category
-    var navigationPath = NavigationPath()               // Tracks navigation stack for deep linking
+    // MARK: - State Properties
     
-    // MARK: - Intent Methods
-    /// Sets the currently selected module and updates navigation
-    /// Triggers module detail view display
-    func selectModule(_ module: CurriculumModule) {
-        selectedModule = module
-        navigationPath.append(module)
-    }
+    /// All assignments loaded from the API for the current cohort
+    /// Contains complete assignment data with progress tracking and due dates
+    /// Used for displaying assignments in lists and organizing by status
+    var assignments: [Assignment] = []
     
-    /// Sets the currently selected assignment category within a module
-    /// Ensures reference to actual data rather than a copy for live updates
-    func selectAssignmentType(_ assignmentType: AssignmentTypeSummary) {
-        selectedAssignmentType = assignmentType
-        if let module = selectedModule {
-            // Create a binding to the actual assignment type in our data
-            if let moduleIndex = curriculumModules.firstIndex(where: { $0.id == module.id }),
-               let typeIndex = curriculumModules[moduleIndex].assignmentTypes.firstIndex(where: { $0.id == assignmentType.id }) {
-                selectedAssignmentType = curriculumModules[moduleIndex].assignmentTypes[typeIndex]
-            }
-        }
-        navigationPath.append(assignmentType)
-    }
+    /// Currently selected curriculum module for navigation
+    /// Used when drilling down into a specific course section
+    var selectedModule: CurriculumModule?
     
-    /// Toggles completion status for an assignment and updates all related data
-    /// Maintains data consistency across modules, types, and assignment lists
-    func toggleAssignmentCompletion(_ assignment: Assignment) {
-        // Find and update the assignment in our data structure
-        for moduleIndex in curriculumModules.indices {
-            for typeIndex in curriculumModules[moduleIndex].assignmentTypes.indices {
-                if let assignmentIndex = curriculumModules[moduleIndex].assignmentTypes[typeIndex].assignments.firstIndex(where: { $0.id == assignment.id }) {
-                    
-                    // Toggle completion - set completion date or clear it
-                    curriculumModules[moduleIndex].assignmentTypes[typeIndex].assignments[assignmentIndex].completionDate =
-                        curriculumModules[moduleIndex].assignmentTypes[typeIndex].assignments[assignmentIndex].isCompleted ? nil : Date()
-                    
-                    // Update the completion count for this assignment type
-                    curriculumModules[moduleIndex].assignmentTypes[typeIndex].updateCompletionCount()
-                    
-                    // Update selectedAssignmentType if it's currently selected
-                    if selectedAssignmentType?.id == curriculumModules[moduleIndex].assignmentTypes[typeIndex].id {
-                        selectedAssignmentType = curriculumModules[moduleIndex].assignmentTypes[typeIndex]
-                    }
-                    
-                    return // Exit once found and updated
-                }
-            }
-        }
-    }
+    /// Currently selected assignment type within a module
+    /// Used when viewing individual assignments in a category
+    var selectedAssignmentType: AssignmentTypeSummary?
     
-    // MARK: - Navigation Methods
-    /// Returns to the main modules list by clearing navigation stack
-    /// Resets all selection state
-    func navigateBackToModules() {
-        navigationPath.removeLast(navigationPath.count)
-        selectedModule = nil
-        selectedAssignmentType = nil
-    }
+    /// Loading state indicator for asynchronous operations
+    /// Controls UI display of progress indicators during API calls
+    var isLoading = false
     
-    /// Returns to module detail view from assignment type view
-    /// Preserves module selection while clearing assignment type selection
-    func navigateBackToModuleDetail() {
-        // Keep only the module in the path
-        if let module = selectedModule {
-            navigationPath = NavigationPath([module])
-        }
-        selectedAssignmentType = nil
-    }
+    /// Error message for display when operations fail
+    /// Provides user-friendly error feedback for network or API issues
+    var errorMessage: String?
     
     // MARK: - Data Loading
-    /// Loads sample curriculum data for development and testing
-    /// In production, this would fetch from an API or database
-    func loadPlaceholderData() {
-        curriculumModules = PlaceholderData.curriculumModules
-    }
-}
-
-// MARK: - Placeholder Data
-/// Provides sample curriculum data for previews, testing, and development
-/// Demonstrates the complete data structure with realistic assignment progress
-struct PlaceholderData {
-    /// Sample curriculum modules representing a typical iOS development course
-    /// Includes multiple assignment categories with varying completion states
-    static var curriculumModules: [CurriculumModule] {
-        [
-            CurriculumModule(
-                id: "01",
-                title: "Swift Fundamentals",
-                dateRange: "Aug 13 - Sept 31",
-                assignmentTypes: [
-                    AssignmentTypeSummary(
-                        id: "labs",
-                        title: "Labs & Projects",
-                        completedCount: 8,
-                        totalCount: 12,
-                        assignments: createPlaceholderAssignments(for: "01", type: .lab, count: 12, completed: 8)
-                    ),
-                    AssignmentTypeSummary(
-                        id: "challenges",
-                        title: "Code Challenges",
-                        completedCount: 20,
-                        totalCount: 25,
-                        assignments: createPlaceholderAssignments(for: "01", type: .codeChallenge, count: 25, completed: 20)
-                    ),
-                    AssignmentTypeSummary(
-                        id: "vocab",
-                        title: "Vocab Quiz",
-                        completedCount: 0,
-                        totalCount: 1,
-                        assignments: createPlaceholderAssignments(for: "01", type: .vocabQuiz, count: 1, completed: 0)
-                    )
-                ]
-            ),
-            CurriculumModule(
-                id: "02",
-                title: "Tables & Persistence",
-                dateRange: "Oct 1 - Nov 15",
-                assignmentTypes: [
-                    AssignmentTypeSummary(
-                        id: "labs",
-                        title: "Labs & Projects",
-                        completedCount: 0,
-                        totalCount: 14,
-                        assignments: [
-                            Assignment(
-                                assignmentID: "TP02",
-                                title: "List.Form",
-                                dueDate: Date().addingTimeInterval(86400),
-                                lessonID: "02",
-                                assignmentType: .lab,
-                                markdownDescription: "# List.Form Lab\n\nPractice creating lists and forms in SwiftUI.",
-                                completionDate: nil
-                            ),
-                            Assignment(
-                                assignmentID: "TP03",
-                                title: "Navigation",
-                                dueDate: Date().addingTimeInterval(86400 * 2),
-                                lessonID: "02",
-                                assignmentType: .lab,
-                                markdownDescription: "# Navigation Lab\n\nImplement navigation in SwiftUI.",
-                                completionDate: nil
-                            ),
-                            Assignment(
-                                assignmentID: "TP06",
-                                title: "Meet My Family",
-                                dueDate: Date().addingTimeInterval(86400 * 5),
-                                lessonID: "02",
-                                assignmentType: .project,
-                                markdownDescription: "# Meet My Family Project\n\nCreate a family member app.",
-                                completionDate: nil
-                            )
-                        ]
-                    ),
-                    AssignmentTypeSummary(
-                        id: "challenges",
-                        title: "Code Challenges",
-                        completedCount: 28,
-                        totalCount: 28,
-                        assignments: createPlaceholderAssignments(for: "02", type: .codeChallenge, count: 28, completed: 28)
-                    ),
-                    AssignmentTypeSummary(
-                        id: "vocab",
-                        title: "Vocab Quiz",
-                        completedCount: 0,
-                        totalCount: 1,
-                        assignments: createPlaceholderAssignments(for: "02", type: .vocabQuiz, count: 1, completed: 0)
-                    )
-                ]
-            )
-        ]
-    }
     
-    // MARK: - Helper Methods
-    /// Generates sample assignments for development and testing
-    /// Creates assignments with sequential due dates and specified completion status
-    private static func createPlaceholderAssignments(for lessonID: String, type: Assignment.AssignmentType, count: Int, completed: Int) -> [Assignment] {
-        var assignments: [Assignment] = []
-        
-        for i in 1...count {
-            let isCompleted = i <= completed
-            assignments.append(
-                Assignment(
-                    assignmentID: "\(type.rawValue.uppercased())\(i)",
-                    title: "\(type.rawValue.capitalized) \(i)",
-                    dueDate: Date().addingTimeInterval(86400 * Double(i)),
-                    lessonID: lessonID,
-                    assignmentType: type,
-                    markdownDescription: "# \(type.rawValue.capitalized) \(i)\n\nDescription for \(type.rawValue) \(i).",
-                    completionDate: isCompleted ? Date() : nil
-                )
-            )
+    /// Loads all assignments for the current cohort from the API
+    /// Fetches comprehensive assignment data including progress and FAQs
+    /// Implements proper error handling and loading state management
+    func loadAssignments() async {
+        // Set loading state
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
         }
         
-        return assignments
+        // Ensure loading state is reset regardless of success or failure
+        // Uses defer block for guaranteed cleanup to maintain code robustness
+        defer {
+            Task { @MainActor in
+                isLoading = false
+            }
+        }
+        
+        do {
+            // Fetch from API using standardized APIController service method
+            let apiAssignments = try await APIController.shared.fetchAllAssignments()
+            
+            // Convert API DTO responses to internal Assignment models
+            // Uses Assignment's from(dto:) initializer for consistent data transformation
+            let convertedAssignments = apiAssignments.map { Assignment(from: $0) }
+            
+            // Update state on main thread for thread-safe UI updates
+            await MainActor.run {
+                assignments = convertedAssignments
+            }
+            
+        } catch {
+            // Handle API errors gracefully with user-friendly messages
+            await MainActor.run {
+                errorMessage = handleAPIError(error)
+            }
+        }
+    }
+    
+    // MARK: - Assignment Progress Management
+    
+    /// Toggles assignment completion status via API with proper result handling
+    /// Updates local state after successful API submission for immediate UI feedback
+    /// - Parameter assignment: The assignment to toggle completion status for
+    /// - Returns: Boolean indicating success (true) or failure (false) of the operation
+    /// Implements robust error handling and state synchronization
+    func toggleAssignmentCompletion(_ assignment: Assignment) async -> Bool {
+        // Determine the new progress state based on current completion status
+        // Supports three valid states: "notStarted", "inProgress", and "complete"
+        let newProgress = assignment.isCompleted ? "notStarted" : "complete"
+        
+        // Validate assignment ID can be converted to UUID for API compatibility
+        // Prevents API calls with invalid or malformed assignment identifiers
+        guard let assignmentUUID = UUID(uuidString: assignment.assignmentID) else {
+            await MainActor.run {
+                errorMessage = "Invalid assignment identifier format"
+            }
+            return false
+        }
+        
+        do {
+            // Submit progress update to API and capture returned data
+            // The API returns updated AssignmentResponseDTO with new progress state
+            // The underscore (_) discards the unused return value intentionally
+            // We update local state directly instead of using returned DTO
+            _ = try await APIController.shared.submitAssignmentProgress(
+                assignmentID: assignmentUUID,
+                progress: newProgress
+            )
+            
+            // Create updated local assignment with new completion status
+            // Uses current date as completion timestamp for "complete" state
+            // Sets completionDate to nil for "notStarted" state
+            var updatedAssignment = assignment
+            updatedAssignment.completionDate = (newProgress == "complete") ? Date() : nil
+            
+            // Update local assignments array on main thread
+            // Maintains data consistency between server and client state
+            await MainActor.run {
+                if let index = assignments.firstIndex(where: { $0.assignmentID == assignment.assignmentID }) {
+                    assignments[index] = updatedAssignment
+                }
+            }
+            
+            return true
+            
+        } catch {
+            // Handle API errors with user-friendly messaging
+            await MainActor.run {
+                errorMessage = handleAPIError(error)
+            }
+            return false
+        }
+    }
+    
+    // MARK: - Error Handling Utility
+    
+    /// Converts raw API errors to user-friendly localized messages
+    /// Provides appropriate messaging for different error types and HTTP status codes
+    /// - Parameter error: The raw Error object from failed API operation
+    /// - Returns: Localized string suitable for display in user interface
+    private func handleAPIError(_ error: Error) -> String {
+        if let apiError = error as? APIError {
+            switch apiError {
+            case .notAuthenticated:
+                return "Please log in to access assignments"
+            case .networkError:
+                return "Network error. Please check your internet connection"
+            case .serverError(let code):
+                // Special handling for 404 errors during API development phase
+                if code == 404 {
+                    return "Assignment API endpoint is not available yet. Please try again later."
+                }
+                return "Server error (code: \(code)). Please try again."
+            case .decodingError:
+                return "Error processing data from server. Please contact support."
+            case .unknown:
+                return "An unexpected error occurred. Please try again."
+            }
+        }
+        return "Failed to load assignments: \(error.localizedDescription)"
+    }
+    
+    // MARK: - Assignment Organization Methods
+    
+    /// Organizes assignments by their current academic status for clear UI presentation
+    /// Categorizes assignments into three logical groups: overdue, upcoming, and completed
+    /// - Returns: Tuple containing three filtered arrays of Assignment objects
+    ///   - overdue: Assignments past due date and not completed
+    ///   - upcoming: Assignments not due yet and not completed
+    ///   - completed: Assignments marked as complete by the user
+    /// Uses computed properties on Assignment model for clean, declarative filtering
+    func assignmentsByStatus() -> (overdue: [Assignment],
+                                   upcoming: [Assignment],
+                                   completed: [Assignment]) {
+        // Filter assignments using computed properties for clean, readable code
+        // The 'isOverdue' property handles date comparison logic internally
+        let overdue = assignments.filter { $0.isOverdue }
+        
+        // The 'isCompleted' property checks for non-nil completionDate
+        let completed = assignments.filter { $0.isCompleted }
+        
+        // Combine both conditions for upcoming assignments (not complete, not overdue)
+        let upcoming = assignments.filter { !$0.isCompleted && !$0.isOverdue }
+        
+        return (overdue, upcoming, completed)
+    }
+    
+    // MARK: - Navigation State Management
+    
+    /// Selects a curriculum module for detailed view navigation
+    /// Updates navigation state and clears any previous assignment type selection
+    /// - Parameter module: The curriculum module to select for detailed viewing
+    func selectModule(_ module: CurriculumModule) {
+        selectedModule = module
+        selectedAssignmentType = nil // Clear assignment type selection
+    }
+    
+    /// Selects an assignment type for individual assignment list view
+    /// Updates navigation state for drilling down into specific assignment categories
+    /// - Parameter assignmentType: The assignment category to select for detailed viewing
+    func selectAssignmentType(_ assignmentType: AssignmentTypeSummary) {
+        selectedAssignmentType = assignmentType
+    }
+    
+    // MARK: - Computed Properties for Data Analysis
+    
+    /// Returns total number of assignments loaded from API
+    /// Provides quick count for UI displays and progress calculations
+    var totalAssignments: Int {
+        assignments.count
+    }
+    
+    /// Returns total number of completed assignments
+    /// Used for progress tracking and completion statistics
+    var completedAssignments: Int {
+        assignments.filter { $0.isCompleted }.count
+    }
+    
+    /// Calculates overall completion percentage across all assignments
+    /// Returns value between 0.0 (no assignments complete) and 1.0 (all assignments complete)
+    /// Used for progress visualization and completion tracking UI elements
+    var overallCompletionPercentage: Double {
+        guard totalAssignments > 0 else { return 0.0 }
+        return Double(completedAssignments) / Double(totalAssignments)
     }
 }

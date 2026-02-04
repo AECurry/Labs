@@ -9,9 +9,24 @@ import SwiftUI
 
 @main
 struct TSMAMountainlandCalendarApp: App {
+    @State private var isAuthenticated = false
+    
+    init() {
+        // Restore saved session when app launches
+        APIController.shared.restoreSession()
+        // Check if we have a valid session
+        isAuthenticated = APIController.shared.isAuthenticated
+    }
+    
     var body: some Scene {
         WindowGroup {
-            MainTabView()
+            if isAuthenticated {
+                MainTabView()
+            } else {
+                StudentLoginView(onLoginSuccess: {
+                    isAuthenticated = true
+                })
+            }
         }
     }
 }
