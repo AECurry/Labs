@@ -1,5 +1,5 @@
 //
-//  CalendarCardStack.swift (FIXED)
+//  CalendarCardStack.swift
 //  TSMAMountainlandCalendar
 //
 //  Created by AnnElaine on 11/10/25.
@@ -7,94 +7,116 @@
 
 import SwiftUI
 
-// MARK: - Calendar Card Stack
-/// Displays lesson plan information for a selected calendar date
-/// Shows either detailed lesson cards or a "no lesson" message
-/// Used in calendar views to show daily instructional content
+// *Calendar Card Stack
+/// Displays lesson plan information for the currently selected calendar date
+/// Used within Calendar views to show daily instructional content
+/// Dynamically switches between loading, error, lesson, weekend, and empty states
 struct CalendarCardStack: View {
-    // MARK: - Properties
-    let todayViewModel: TodayViewModel
     
-    // MARK: - Body
+    // *Dependencies
+    
+    let viewModel: CalendarViewModel   // Source of truth for selected date and lesson data
+    
+    // MARK: - Computed Properties
+    
+    /// Determines if the selected date falls on a weekend (Saturday or Sunday)
+    private var isWeekend: Bool {
+        let weekday = Calendar.current.component(.weekday, from: viewModel.selectedDate)
+        return weekday == 1 || weekday == 7  // 1 = Sunday, 7 = Saturday
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // MARK: - Section Header
-            /// Title indicating this section shows daily lesson plans
+            
+            // *Header
+            // Displays contextual title based on selected date
             Text("Lesson Plan For \(headerDateText)")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(MountainlandColors.smokeyBlack)
-                .padding(.horizontal, 4)  // Small side padding for visual alignment
+                .padding(.horizontal, 4)
             
-            // MARK: - Loading State
-            /// Shows progress indicator while fetching lesson data
-            if todayViewModel.isLoading {
-                HStack {
-                    Spacer()
-                    VStack(spacing: 12) {
-                        ProgressView()
-                        Text("Loading lesson...")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.vertical, 40)
-                    Spacer()
-                }
-            }
-            // MARK: - Error State
-            /// Shows error message if lesson data fails to load
-            /// ✅ FIXED: Changed from .error to .errorMessage
-            else if let error = todayViewModel.errorMessage {
+            // *Content States
+            if viewModel.isLoading {
+                // Loading state while calendar data is being fetched
+                loadingView
+                
+            } else if let error = viewModel.errorMessage {
+                // Error state if calendar data fails to load
                 CardView(
                     emoji: "⚠️",
-                    title: "Error Loading Lesson",
+                    title: "Error",
                     content: error,
-                    isTopCard: true
+                    cardStyle: .standalone  // ✅ Rounded corners
                 )
-            }
-            // MARK: - Conditional Content
-            /// Shows either lesson cards or "no lesson" message based on date
-            else if let entry = todayViewModel.dailyContent {
-                // MARK: - Lesson Plan Cards
-                /// Displays detailed lesson information when a lesson exists
+                
+            } else if isWeekend {
+                // ✅ Weekend state - standalone card with rounded top
+                CardView(
+                    emoji: "🌴",
+                    title: "Weekend",
+                    content: "No class today. Enjoy your weekend!",
+                    cardStyle: .standalone  // ✅ Rounded top for Calendar context
+                )
+                
+            } else if let entry = viewModel.selectedDateEntry {
+                // Lesson state – display full lesson plan cards
                 LessonPlanCardsView(
                     entry: entry,
-                    showSubmitFeedback: false,      // Feedback disabled in calendar view
-                    onSubmitFeedback: nil           // No feedback action in this context
+                    showSubmitFeedback: false,
+                    onSubmitFeedback: nil,
+                    hasHeaderAbove: false  // ✅ Calendar tab has no header above
                 )
+                
             } else {
-                // MARK: - No Lesson Card
-                /// Friendly message shown when no lesson is scheduled for selected date
+                // Empty state – no lesson scheduled
                 CardView(
-                    emoji: "📅",                    // Calendar emoji for visual interest
-                    title: "No Lesson",             // Clear status message
-                    content: "No lesson scheduled for \(formattedSelectedDate)", // Specific date reference
-                    isTopCard: true                 // Single card appearance
+                    emoji: "📅",
+                    title: "No Lesson",
+                    content: "No lesson scheduled for \(formattedSelectedDate)",
+                    cardStyle: .standalone  // ✅ Rounded top
                 )
             }
         }
     }
     
-    // MARK: - Date Formatting
-    /// Formats the selected date for display in the "no lesson" message
-    /// Uses abbreviated month and day format (e.g., "Nov 13")
-    private var formattedSelectedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"  // Month abbreviation and day number
-        return formatter.string(from: todayViewModel.date)
+    // *Loading View
+    
+    private var loadingView: some View {
+        // Centered loading indicator for calendar content
+        HStack {
+            Spacer()
+            VStack(spacing: 12) {
+                ProgressView()
+                Text("Loading...")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.vertical, 40)
+            Spacer()
+        }
     }
     
-    /// Determines header text based on whether selected date is today
-    /// Shows "Today" for current date, otherwise shows the date
+    // *Date Formatting Helpers
+    
+    private var formattedSelectedDate: String {
+        // Formats selected date for display in headers and messages
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: viewModel.selectedDate)
+    }
+    
     private var headerDateText: String {
-        if Calendar.current.isDateInToday(todayViewModel.date) {
-            return "Today"
-        } else {
-            return formattedSelectedDate
-        }
+        // Displays "Today" when applicable, otherwise formatted date
+        Calendar.current.isDateInToday(viewModel.selectedDate)
+            ? "Today"
+            : formattedSelectedDate
     }
 }
 
+// MARK: - Preview
 #Preview {
-    CalendarCardStack(todayViewModel: TodayViewModel())
+    CalendarCardStack(viewModel: CalendarViewModel())
+        .padding()
+        .background(MountainlandColors.platinum)
 }

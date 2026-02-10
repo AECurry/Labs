@@ -9,26 +9,32 @@ import SwiftUI
 import Foundation
 
 // MARK: - Login View
-/// Authentication screen for student login that automatically fills in their email address and shows their profile picture, then checks if the password matches.
-/// Features personalized welcome, secure input fields, and demo authentication
-/// Right now this uses simple password matching for demo purposes. In a real app, this would connect to a secure authentication system.
+/// Authentication screen for student login
+/// Displays a personalized welcome, pre-fills the student email, and validates credentials
+/// Uses demo password matching with API fallback for development/testing purposes
 
 struct LoginView: View {
-    let student: Student
-    let onLoginSuccess: () -> Void
+    // *Injected Dependencies
+    let student: Student                 // Student attempting to log in
+    let onLoginSuccess: () -> Void       // Callback triggered after successful authentication
     
-    @State private var email: String = ""
-    @State private var password: String = ""
-    @State private var showAlert = false
-    @State private var alertMessage = ""
-    @State private var isLoading = false
-    @Environment(\.dismiss) private var dismiss
+    // *View State
+    @State private var email: String = ""        // Email input (auto-filled on appear)
+    @State private var password: String = ""     // Secure password input
+    @State private var showAlert = false          // Controls login error alert visibility
+    @State private var alertMessage = ""          // Error message displayed in alert
+    @State private var isLoading = false          // Shows loading spinner during authentication
+    
+    // *Environment
+    @Environment(\.dismiss) private var dismiss   // Allows dismissing the view
     
     var body: some View {
         NavigationStack {
             ZStack {
+                // *Global Background
                 MountainlandColors.platinum.ignoresSafeArea()
                 
+                // *Background Logo Watermark
                 Image("MountainlandLogo1")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -36,7 +42,10 @@ struct LoginView: View {
                     .opacity(0.1)
                     .offset(y: 50)
                 
+                // *Main Layout
                 VStack(spacing: 0) {
+                    
+                    // *Back Navigation
                     HStack {
                         Button(action: { dismiss() }) {
                             Image(systemName: "chevron.left")
@@ -50,6 +59,7 @@ struct LoginView: View {
                     .padding(.top, 16)
                     .padding(.bottom, 8)
                     
+                    // *Student Avatar
                     ZStack {
                         Circle()
                             .fill(MountainlandColors.burgundy2)
@@ -63,8 +73,11 @@ struct LoginView: View {
                     .padding(.top, 20)
                     .padding(.bottom, 16)
                     
+                    // *Scrollable Content
                     ScrollView {
                         VStack(alignment: .center, spacing: 24) {
+                            
+                            // *Welcome Message
                             Text("Welcome back, \(student.firstName)!")
                                 .font(.title3)
                                 .fontWeight(.semibold)
@@ -72,10 +85,12 @@ struct LoginView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.bottom, 24)
                             
+                            // *Email Field
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Email")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(MountainlandColors.smokeyBlack)
+                                
                                 TextField("Email", text: $email)
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
                                     .textContentType(.emailAddress)
@@ -83,18 +98,21 @@ struct LoginView: View {
                             }
                             .padding(.horizontal, 16)
                             
+                            // *Password Field
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Password")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(MountainlandColors.smokeyBlack)
+                                
                                 SecureField("Password", text: $password)
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
                                     .textContentType(.password)
                             }
                             .padding(.horizontal, 16)
                             
+                            // *Forgot Password Action
                             Button("Forgot Password?") {
-                                // Handle forgot password
+                                // Placeholder for password recovery flow
                             }
                             .font(.subheadline)
                             .foregroundColor(MountainlandColors.smokeyBlack)
@@ -102,6 +120,7 @@ struct LoginView: View {
                             .padding(.horizontal, 16)
                             .padding(.bottom, 24)
                             
+                            // *Login Button / Loading Indicator
                             if isLoading {
                                 ProgressView()
                                     .padding()
@@ -122,7 +141,7 @@ struct LoginView: View {
                                             y: 4
                                         )
                                 }
-                                .disabled(email.isEmpty || password.isEmpty)
+                                .disabled(email.isEmpty || password.isEmpty) // Prevent empty submissions
                                 .padding(.horizontal, 16)
                                 .padding(.top, 16)
                             }
@@ -131,28 +150,35 @@ struct LoginView: View {
                 }
             }
             .navigationBarHidden(true)
+            
+            // *Login Error Alert
             .alert("Login Error", isPresented: $showAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(alertMessage)
             }
+            
+            // *Pre-fill Email on Load
             .onAppear {
                 email = student.email
             }
         }
     }
     
+    // MARK: - Authentication Logic
+    /// Handles user login using API authentication with demo fallback
     private func authenticateUser() {
         isLoading = true
         
         Task {
             do {
+                // Attempt API login
                 let response = try await APIController.shared.login(
                     email: email,
                     password: password
                 )
                 
-                // Log successful login details for debugging
+                // *Debug Logging (Success)
                 print("✅ Login successful!")
                 print("   User: \(response.firstName) \(response.lastName)")
                 print("   Email: \(response.email)")
@@ -168,10 +194,10 @@ struct LoginView: View {
                 await MainActor.run {
                     isLoading = false
                     
-                    // Log error details for debugging
+                    // *Debug Logging (Failure)
                     print("❌ Login failed: \(error)")
                     
-                    // Check what type of error
+                    // *Error Handling
                     if let loginError = error as? LoginError {
                         switch loginError {
                         case .badResponse:
@@ -188,8 +214,9 @@ struct LoginView: View {
                     
                     showAlert = true
                     
-                    // Fallback for demo/testing, still allow login with the demo password
-                    // Remove this once your API is working!
+                    // *Demo Authentication Fallback
+                    // Allows login if demo password matches student record
+                    // Remove once API authentication is fully implemented
                     if password == student.password {
                         print("⚠️ API failed, using demo authentication with password: \(password)")
                         print("   Student demo password match: true")

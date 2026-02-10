@@ -5,97 +5,93 @@
 //  Created by AnnElaine on 11/7/25.
 //
 
-// *Main Tab View
-/// Parent View of the entire app - the foundational structure that everything else gets built upon, and manages the navigation between the different sections.
-/// Coordinates between header, content area, and bottom navigation bar
 import SwiftUI
 
+// MARK: - Main Tab View
+/// Parent view of the entire app using Apple's native TabView
+/// Provides type-safe navigation between app sections
+/// Uses SwiftUI's built-in tab bar instead of custom implementation
 struct MainTabView: View {
-    // *State Properties
-    @State private var selectedTab = 0  // Tracks currently active tab (0=Today, 1=Calendar, 2=Assignments)
+    // MARK: - State Properties
     
-    // Get the current user from APIController
+    /// Currently selected tab - type-safe using enum
+    @State private var selectedTab: Tab = .today
+    
+    // MARK: - Computed Properties
+    
+    /// Retrieves the current authenticated user from APIController
     private var currentUser: Student? {
         APIController.shared.currentUser
     }
     
+    // MARK: - Body
+    
     var body: some View {
-        // We should only reach here if authenticated, but check just in case
-        if currentUser != nil {
-            ZStack {
-                // *Global Background
-                MountainlandColors.platinum.ignoresSafeArea()
+        // Verify user is authenticated before showing main app
+        if let user = currentUser {
+            
+            // ✅ Apple's Native TabView - handles everything automatically
+            TabView(selection: $selectedTab) {
                 
-                // *Main App Structure
-                VStack(spacing: 0) {
-                    
-                    // *App Header
-                    AppHeader(
-                        title: "iOS Development",
-                        subtitle: "Fall/Spring - 25/26"
-                    )
-                    
-                    // *Content Area
-                    Group {
-                        switch selectedTab {
-                        case 0:
-                            // Today tab - shows daily lesson plan with calendar navigation capability
-                            TodayView(onSwitchToCalendar: {
-                                // Switch to Calendar tab when calendar icon is tapped
-                                selectedTab = 1
-                            })
-                        case 1:
-                            CalendarView()  // Calendar tab - shows monthly calendar view
-                        case 2:
-                            // UPDATED: Pass the current user to AssignmentView
-                            // Use optional binding to safely unwrap
-                            if let user = currentUser {
-                                AssignmentView(currentUser: user)
-                            } else {
-                                // Fallback view - should not happen
-                                Text("User data loading...")
-                                    .foregroundColor(.secondary)
-                            }
-                        default:
-                            // Fallback to Today view for invalid tab indices
-                            TodayView(onSwitchToCalendar: {
-                                selectedTab = 1
-                            })
-                        }
+                // MARK: - Today Tab
+                TodayView(onSwitchToCalendar: {
+                    selectedTab = .calendar  // Type-safe tab switching
+                })
+                .tabItem {
+                    Label(Tab.today.title, systemImage: Tab.today.icon)
+                }
+                .tag(Tab.today)
+                
+                // MARK: - Calendar Tab
+                CalendarView()
+                    .tabItem {
+                        Label(Tab.calendar.title, systemImage: Tab.calendar.icon)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)  // Expand to fill available space
-                    
-                    // *Bottom Navigation
-                    BottomNavigationBar(
-                        selectedTab: $selectedTab,  // Two-way binding for tab selection
-                        tabs: BottomNavigationBar.mainTabs  // Predefined tab configuration
-                    )
-                }
-            }
-            .ignoresSafeArea(.keyboard)  // Prevents keyboard from resizing the main app layout
-        } else {
-            // This is a safety fallback - show loading while we try to restore
-            VStack {
-                ProgressView("Loading user data...")
-                    .padding()
+                    .tag(Tab.calendar)
                 
-                Button("Try Again") {
-                    APIController.shared.restoreSession()
-                }
+                // MARK: - Assignments Tab
+                AssignmentView(currentUser: user)
+                    .tabItem {
+                        Label(Tab.assignments.title, systemImage: Tab.assignments.icon)
+                    }
+                    .tag(Tab.assignments)
+            }
+            .tint(MountainlandColors.burgundy1)  // Sets selected tab color
+            .ignoresSafeArea(.keyboard)
+            
+        } else {
+            // MARK: - Fallback State
+            userLoadingView
+        }
+    }
+    
+    // MARK: - User Loading View
+    
+    /// Fallback view shown when user data is unavailable
+    private var userLoadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView("Loading user data...")
                 .padding()
-                .background(MountainlandColors.burgundy1)
-                .foregroundColor(.white)
-                .cornerRadius(8)
+            
+            Button(action: {
+                APIController.shared.restoreSession()
+            }) {
+                Text("Try Again")
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(MountainlandColors.burgundy1)
+                    .cornerRadius(8)
             }
         }
     }
 }
 
 // MARK: - Preview
-/// Xcode preview for design and layout testing
+
 #Preview {
-    // Set up a mock current user for preview
-    // Create a temporary student in APIController for preview
+    // Set up mock user for preview
     let mockStudent = Student.demoStudents[0]
     APIController.shared.currentUser = mockStudent
     

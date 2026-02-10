@@ -8,11 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		49566B9E2EBE630800120691 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49566B9D2EBE630800120691 /* MainTabView.swift */; };
+		4961363D2F3A361000AAD0CF /* Tab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4961363C2F3A361000AAD0CF /* Tab.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		49566B6B2EBE613200120691 /* TSMAMountainlandCalendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TSMAMountainlandCalendar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		49566B9D2EBE630800120691 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		4961363C2F3A361000AAD0CF /* Tab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tab.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -63,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				49566B9D2EBE630800120691 /* MainTabView.swift */,
+				4961363C2F3A361000AAD0CF /* Tab.swift */,
 				497E9E342F31009C00C129A3 /* Login */,
 				49B7D3372EC65B6100752F61 /* Today */,
 				49B7D3382EC65E3600752F61 /* Calendar */,
@@ -160,6 +163,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4961363D2F3A361000AAD0CF /* Tab.swift in Sources */,
 				49566B9E2EBE630800120691 /* MainTabView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

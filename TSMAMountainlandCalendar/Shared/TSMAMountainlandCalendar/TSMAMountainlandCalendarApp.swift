@@ -6,10 +6,27 @@
 //
 
 import SwiftUI
+import SwiftData  // Add this import
 
 @main
 struct TSMAMountainlandCalendarApp: App {
     @State private var isAuthenticated = false
+    
+    // MARK: - SwiftData Container
+    /// Provides persistent storage for assignment completion status
+    /// Configured to automatically manage Assignment model data
+    var sharedModelContainer: ModelContainer = {
+        let schema = Schema([
+            Assignment.self  // Register our Assignment model with SwiftData
+        ])
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        
+        do {
+            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+        } catch {
+            fatalError("Could not create ModelContainer: \(error)")
+        }
+    }()
     
     init() {
         // Restore saved session when app launches
@@ -22,6 +39,7 @@ struct TSMAMountainlandCalendarApp: App {
         WindowGroup {
             if isAuthenticated {
                 MainTabView()
+                    .modelContainer(sharedModelContainer)  // Add SwiftData to authenticated views
             } else {
                 StudentLoginView(onLoginSuccess: {
                     isAuthenticated = true

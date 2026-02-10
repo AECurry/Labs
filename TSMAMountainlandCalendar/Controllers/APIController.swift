@@ -7,13 +7,13 @@
 
 import Foundation
 
-// MARK: - Login Models (Keep these here since they're small)
+// MARK: - Login Models
 struct LoginResponse: Codable {
     let firstName: String
     let lastName: String
     let email: String
     let userUUID: UUID
-    let secret: UUID  // This is the userSecret for API calls!
+    let secret: UUID
     let userName: String
 }
 
@@ -22,60 +22,34 @@ enum LoginError: Error {
     case systemError
 }
 
-// MARK: - Main API Controller
 class APIController {
-    // MARK: - Singleton Instance
     static let shared = APIController()
     
-    // MARK: - Configuration Properties
     let baseURL = "https://social-media-app.ryanplitt.com"
-    
-    /// Store the userSecret (UUID) from login
     var userSecret: UUID?
     var cohort: String = "fall2025"
-    
-    // ADD THIS: Store the current logged-in student
     var currentUser: Student?
     
-    // MARK: - Private Initializer
     private init() {}
     
-    // MARK: - Login Method
     func login(email: String, password: String) async throws -> LoginResponse {
         let url = URL(string: "\(baseURL)/auth/login")!
         
-        var components = URLComponents()
-        components.queryItems = [
-            URLQueryItem(name: "email", value: email),
-            URLQueryItem(name: "password", value: password)
-        ]
-        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue("application/x-www-form-urlencoded; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         
-        if let queryString = components.percentEncodedQuery {
-            request.httpBody = queryString.data(using: .utf8)
-        }
-        
-        print("Login request to: \(url.absoluteString)")
+        let requestBody = ["email": email, "password": password]
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
         let (data, urlResponse) = try await URLSession.shared.data(for: request)
         
-        if let responseString = String(data: data, encoding: .utf8) {
-            print("Server response: \(responseString)")
-        }
-        
         guard let httpResponse = urlResponse as? HTTPURLResponse else {
-            print("Invalid server response")
             throw LoginError.systemError
         }
         
-        print("Status code: \(httpResponse.statusCode)")
-        
-        guard httpResponse.statusCode == 200 else {
-            print("Server returned error status: \(httpResponse.statusCode)")
+        guard (200...299).contains(httpResponse.statusCode) else {
             throw LoginError.badResponse
         }
         
@@ -83,53 +57,114 @@ class APIController {
         jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
         jsonDecoder.dateDecodingStrategy = .iso8601
         
-        do {
-            let response = try jsonDecoder.decode(LoginResponse.self, from: data)
-            
-            // Store the userSecret
-            self.userSecret = response.secret
-            print("Login successful! UserSecret: \(response.secret)")
-            print("User: \(response.firstName) \(response.lastName)")
-            
-            // ADD THIS: Find and store the matching student
-            if let student = Student.demoStudents.first(where: { $0.email == email }) {
-                self.currentUser = student
-                print("Found matching student: \(student.name)")
-            } else {
-                print("Warning: No matching student found for email: \(email)")
-            }
-            
-            saveSession()
-            
-            return response
-        } catch {
-            print("Failed to decode login response: \(error)")
-            print("Response data: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
-            throw error
+        let response = try jsonDecoder.decode(LoginResponse.self, from: data)
+        self.userSecret = response.secret
+        
+        if let student = Student.demoStudents.first(where: { $0.email == email }) {
+            self.currentUser = student
+        }
+        
+        saveSession()
+        return response
+    }
+    
+    func makeRequest<T: Decodable>(url: URL, method: String, queryItems: [URLQueryItem]? = nil) async throws -> T {
+        guard let userSecret = userSecret else { throw APIError.notAuthenticated }
+        
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        components.queryItems = queryItems
+        guard let finalURL = components.url else { throw APIError.networkError }
+        
+        var request = URLRequest(url: finalURL)
+        request.httpMethod = method
+        request.setValue("Bearer \(userSecret.uuidString)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let jsonObject = try JSONSerialization.jsonObject(with: data)
+        let prettyData = try JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted])
+        print (String(decoding: prettyData, as: UTF8.self))
+        
+        guard let httpResponse = response as? HTTPURLResponse else { throw APIError.networkError }
+        
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        return try decoder.decode(T.self, from: data)
+    }
+    
+    func makeRequest<T: Decodable>(url: URL, method: String, body: Encodable) async throws -> T {
+        guard let userSecret = userSecret else { throw APIError.notAuthenticated }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.setValue("Bearer \(userSecret.uuidString)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        request.httpBody = try encoder.encode(body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else { throw APIError.networkError }
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        return try decoder.decode(T.self, from: data)
+    }
+    
+    func makeRequest(url: URL, method: String, body: Encodable? = nil) async throws {
+        guard let userSecret = userSecret else { throw APIError.notAuthenticated }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.setValue("Bearer \(userSecret.uuidString)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        if let body = body {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            request.httpBody = try encoder.encode(body)
+        }
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else { throw APIError.networkError }
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw APIError.serverError(httpResponse.statusCode)
         }
     }
     
-    // MARK: - Session Persistence
     private let userSecretKey = "savedUserSecret"
     private let cohortKey = "savedCohort"
-    private let currentUserEmailKey = "savedCurrentUserEmail" // ADD THIS
+    private let currentUserEmailKey = "savedCurrentUserEmail"
     
     func saveSession() {
         if let userSecret = userSecret {
             UserDefaults.standard.set(userSecret.uuidString, forKey: userSecretKey)
         }
         UserDefaults.standard.set(cohort, forKey: cohortKey)
-        
-        // ADD THIS: Save the current user's email
         if let currentUser = currentUser {
             UserDefaults.standard.set(currentUser.email, forKey: currentUserEmailKey)
         }
-        
-        print("Session saved to UserDefaults")
     }
     
     func restoreSession() {
-        // Restore userSecret and cohort
         if let savedSecret = UserDefaults.standard.string(forKey: userSecretKey),
            let uuid = UUID(uuidString: savedSecret) {
             userSecret = uuid
@@ -137,15 +172,10 @@ class APIController {
         if let savedCohort = UserDefaults.standard.string(forKey: cohortKey) {
             cohort = savedCohort
         }
-        
-        // ADD THIS: Restore current user from email
         if let savedEmail = UserDefaults.standard.string(forKey: currentUserEmailKey),
            let student = Student.demoStudents.first(where: { $0.email == savedEmail }) {
             currentUser = student
-            print("Restored current user: \(student.name)")
         }
-        
-        print("Session restored from UserDefaults")
     }
     
     func clearSession() {
@@ -154,13 +184,10 @@ class APIController {
         UserDefaults.standard.removeObject(forKey: userSecretKey)
         UserDefaults.standard.removeObject(forKey: cohortKey)
         UserDefaults.standard.removeObject(forKey: currentUserEmailKey)
-        print("Session cleared")
     }
     
-    // MARK: - Utility Methods
     func logout() {
         clearSession()
-        print("User logged out")
     }
     
     var isAuthenticated: Bool {

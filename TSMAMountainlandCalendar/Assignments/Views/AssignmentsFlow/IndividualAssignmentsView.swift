@@ -6,163 +6,245 @@
 //
 
 import SwiftUI
+import SwiftData
 
 // MARK: - Individual Assignments View
-/// Detailed screen displaying all assignments within a specific category (Labs, Projects, etc.)
-/// Provides a clean interface for viewing and toggling assignment completion status
-/// Used after users tap on an assignment category card to see the full list of assignments
-/// Implements proper Swift Concurrency for API interactions with user-friendly error handling
+/// Professional individual assignments list with completion tracking
+/// Displays assignments within a specific category with interactive checkboxes
+/// Uses SwiftData for persistent local storage of completion status
+/// FIXED: Uses .sheet(item:) instead of .sheet(isPresented:) to prevent blank screen bug
 struct IndividualAssignmentsView: View {
     // MARK: - Properties
-    
-    /// The course module containing the assignments being displayed
-    /// Provides contextual information about the academic section and date range
+    /// The course module containing these assignments
     let courseSection: CurriculumModule
     
-    /// The specific assignment category being viewed (e.g., "Labs & Projects")
-    /// Contains the array of individual assignments to display in checkbox format
+    /// The specific assignment category being displayed (Labs, Projects, etc.)
     let assignmentType: AssignmentTypeSummary
     
-    /// Shared ViewModel for managing assignment data and API interactions
-    /// Provides centralized state management for assignment completion and loading states
-    @Environment(AssignmentsViewModel.self) private var viewModel
+    /// SwiftData model context for local database operations
+    @Environment(\.modelContext) private var modelContext
+    
+    /// Environment value for dismissing this view
+    @Environment(\.dismiss) private var dismiss
+    
+    /// The assignment currently selected for detail view
+    /// ✅ CRITICAL FIX: Using optional Assignment directly for .sheet(item:)
+    /// SwiftUI will only present sheet when this becomes non-nil
+    /// Automatically dismisses sheet when set back to nil
+    @State private var selectedAssignment: Assignment?
     
     // MARK: - Body
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 24) {
-                // MARK: - Header Section
-                /// Prominent title area showing course and assignment category for clear context
-                /// Uses hierarchical typography for visual clarity and information hierarchy
-                VStack(alignment: .leading, spacing: 8) {
-                    // MARK: - Course Title
-                    /// Main course name displayed in large, bold typography for primary identification
-                    /// Provides academic context for the assignments being viewed
-                    Text(courseSection.title)
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(MountainlandColors.smokeyBlack)
-                    
-                    // MARK: - Assignment Category
-                    /// Specific assignment type displayed in brand burgundy color for visual distinction
-                    /// Helps users understand which category of assignments they are viewing
-                    Text(assignmentType.title)
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(MountainlandColors.burgundy1)
+        VStack(spacing: 0) {
+            // MARK: - Header
+            /// Custom navigation header with back button
+            HStack {
+                // Back button returns to previous screen
+                Button(action: { dismiss() }) {
+                    Image(systemName: "chevron.left")
+                        .font(.title3)
+                        .foregroundColor(.primary)
                 }
+                .padding(.leading, 8)
                 
-                // MARK: - Assignments List Container
-                /// Scrollable container for assignment rows with efficient LazyVStack rendering
-                /// Uses lazy loading for optimal performance with potentially long assignment lists
-                /// Provides consistent spacing between individual assignment checkbox rows
-                LazyVStack(alignment: .leading, spacing: 12) {
-                    // MARK: - Assignment Rows Loop
-                    /// Iterates through each assignment in the category to create interactive rows
-                    /// Each row includes a tappable checkbox and assignment details
-                    /// Implements proper Swift Concurrency for API completion toggling
-                    ForEach(assignmentType.assignments) { assignment in
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 16)
+            
+            // MARK: - Title
+            /// Course section name displayed prominently
+            Text(courseSection.title)
+                .font(.title2)
+                .fontWeight(.bold)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.bottom, 8)
+            
+            // MARK: - Assignment Type Indicator
+            /// Shows which category of assignments is displayed
+            HStack(spacing: 8) {
+                Image(systemName: "chevron.down")
+                    .font(.caption)
+                Image(systemName: "folder.fill")
+                    .foregroundColor(MountainlandColors.burgundy1.opacity(0.6))
+                Text(assignmentType.title)
+                    .font(.body)
+                    .fontWeight(.semibold)
+                    .foregroundColor(MountainlandColors.smokeyBlack)
+            }
+            .padding(.bottom, 24)
+            
+            // MARK: - Assignments List
+            /// Scrollable list of assignment rows with checkboxes
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(Array(assignmentType.assignments.enumerated()), id: \.element.id) { index, assignment in
                         AssignmentCheckboxRow(
                             assignment: assignment,
                             onToggle: {
-                                // MARK: - Asynchronous Completion Toggle
-                                /// Wraps the async ViewModel call in a Task to handle concurrency properly
-                                /// Prevents "async call in non-async context" compiler errors
-                                /// Ensures UI remains responsive while API operation completes
                                 Task {
-                                    await viewModel.toggleAssignmentCompletion(assignment)
+                                    await toggleAssignmentCompletion(assignment)
                                 }
+                            },
+                            onTap: {
+                                // ✅ CRITICAL FIX: Simply set the assignment
+                                // SwiftUI will automatically present the sheet
+                                // No boolean needed, no timing issues
+                                selectedAssignment = assignment
                             }
                         )
+                        
+                        // Divider between assignments (not after last one)
+                        if index < assignmentType.assignments.count - 1 {
+                            Divider()
+                                .padding(.leading, 70)
+                        }
                     }
                 }
+                .background(MountainlandColors.white)
+                .cornerRadius(12)
+                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                .padding(.horizontal, 16)
             }
-            .padding()  // Outer padding for comfortable content spacing
         }
-        .navigationBarTitleDisplayMode(.inline)  // Compact navigation bar for focused content
-        .background(MountainlandColors.platinum.ignoresSafeArea())  // Consistent app background
+        .background(MountainlandColors.platinum.ignoresSafeArea())
+        .navigationBarHidden(true)
+        
+        // MARK: - Assignment Detail Sheet
+        /// ✅ CRITICAL FIX: Using .sheet(item:) instead of .sheet(isPresented:)
+        /// This prevents the blank screen bug by ensuring the assignment exists
+        /// before SwiftUI attempts to render the sheet
+        /// SwiftUI will only call this closure when selectedAssignment is non-nil
+        .sheet(item: $selectedAssignment) { assignment in
+            AssignmentOutlineView(
+                assignment: assignment,
+                isCompleted: assignment.isCompleted,
+                onToggleComplete: {
+                    Task {
+                        await toggleAssignmentCompletion(assignment)
+                    }
+                }
+            )
+        }
+    }
+    
+    // MARK: - Completion Toggle with SwiftData
+    /// Toggles assignment completion status in SwiftData and syncs with API
+    /// Updates UI immediately for responsive user experience
+    /// Updates the assignment object directly which triggers SwiftUI refresh
+    private func toggleAssignmentCompletion(_ assignment: Assignment) async {
+        print("🔄 Toggling completion for: \(assignment.title)")
+        
+        // Toggle completion date (nil = not complete, Date = complete)
+        assignment.completionDate = assignment.isCompleted ? nil : Date()
+        
+        // Save to SwiftData for local persistence
+        do {
+            try modelContext.save()
+            print("✅ SwiftData save successful")
+            
+            // Sync with API (secondary, for multi-device consistency)
+            if let assignmentUUID = UUID(uuidString: assignment.lessonID) {
+                let progress = assignment.isCompleted ? "complete" : "notStarted"
+                _ = try? await APIController.shared.submitAssignmentProgress(
+                    assignmentID: assignmentUUID,
+                    progress: progress
+                )
+                print("📡 API sync completed")
+            }
+        } catch {
+            print("❌ Error saving to SwiftData: \(error)")
+        }
     }
 }
 
-// MARK: - Assignment Checkbox Row Component
-/// Reusable row component displaying individual assignments with completion toggle functionality
-/// Features visual feedback for completion status with strikethrough text and color changes
-/// Provides clear affordance for marking assignments complete/incomplete with large tap targets
+// MARK: - Assignment Checkbox Row
+/// Individual assignment row with completion checkbox and details
+/// Displays due date, assignment type, title, and interactive checkbox
+/// Entire row is tappable to open assignment detail view
 struct AssignmentCheckboxRow: View {
     // MARK: - Properties
-    
-    /// The assignment data to display in this row
-    /// Contains title, ID, completion status, and other metadata for display
+    /// The assignment data to display
     let assignment: Assignment
     
-    /// Closure called when the completion checkbox is tapped
-    /// Handles the API call to update completion status on the server
-    let onToggle: () -> Void
+    /// Closure called when checkbox is tapped
+    let onToggle: () async -> Void
+    
+    /// Closure called when row is tapped (for detail view)
+    let onTap: () -> Void
     
     // MARK: - Computed Properties
-    
-    /// Determines the appropriate SF Symbol icon based on assignment completion status
-    /// Returns "checkmark.circle.fill" for completed assignments, "circle" for incomplete
-    /// Provides clear visual feedback for current completion state
+    /// Returns appropriate checkbox icon based on completion status
     private var completionIcon: String {
-        assignment.isCompleted ? "checkmark.circle.fill" : "circle"
-    }
-    
-    /// Determines the appropriate color for the completion icon based on assignment status
-    /// Returns green for completed assignments, gray for incomplete assignments
-    /// Uses brand color palette for consistent visual design throughout the app
-    private var completionColor: Color {
-        assignment.isCompleted ? MountainlandColors.pigmentGreen : MountainlandColors.battleshipGray
+        assignment.isCompleted ? "checkmark.square.fill" : "square"
     }
     
     // MARK: - Body
     var body: some View {
-        // MARK: - Row Container
-        /// Horizontal stack arranging checkbox, assignment details, and spacing
-        /// Uses top alignment to handle multi-line assignment titles gracefully
-        /// Provides generous spacing between elements for clear visual separation
-        HStack(alignment: .top, spacing: 16) {
-            // MARK: - Completion Checkbox Button
-            /// Large, tappable checkbox for marking assignment completion
-            /// Uses SF Symbol icons with appropriate colors based on completion status
-            /// Implements PlainButtonStyle to remove default iOS button styling
-            Button(action: onToggle) {
-                Image(systemName: completionIcon)
-                    .font(.title2)  // Large icon size for easy tapping
-                    .foregroundColor(completionColor)  // Color-coded completion status
-            }
-            .buttonStyle(PlainButtonStyle())  // Clean, minimal button appearance
-            
-            // MARK: - Assignment Details Stack
-            /// Vertical stack containing assignment title and optional identifier
-            /// Provides clear typographic hierarchy with appropriate text styling
-            /// Implements strikethrough effect for completed assignments as visual indicator
-            VStack(alignment: .leading, spacing: 4) {
-                // MARK: - Assignment Title
-                /// Primary assignment name with conditional strikethrough for completed items
-                /// Uses appropriate text colors based on completion status for visual clarity
-                Text(assignment.title)
-                    .font(.body)
-                    .foregroundColor(assignment.isCompleted ?
-                        MountainlandColors.battleshipGray : MountainlandColors.smokeyBlack)
-                    .strikethrough(assignment.isCompleted)  // Visual completion indicator
+        HStack(spacing: 16) {
+            // MARK: - Due Date and Type Column
+            /// Left column showing when assignment is due and its type
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Due:")
+                    .font(.caption2)
+                    .foregroundColor(MountainlandColors.battleshipGray)
                 
-                // MARK: - Assignment ID (Conditional)
-                /// Course-specific identifier shown when available
-                /// Uses smaller font size and brand burgundy color for visual distinction
-                /// Hidden when assignment ID is empty to maintain clean layout
-                if !assignment.assignmentID.isEmpty {
-                    Text(assignment.assignmentID)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(MountainlandColors.burgundy1)
-                }
+                Text(assignment.formattedDueDate)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(MountainlandColors.smokeyBlack)
+                
+                Text(assignment.assignmentType.rawValue.capitalized)
+                    .font(.caption2)
+                    .foregroundColor(MountainlandColors.battleshipGray)
             }
+            .frame(width: 90, alignment: .leading)
             
-            Spacer()  // Pushes content to leading edge for clean alignment
+            // MARK: - Assignment Title
+            /// Main assignment name with strikethrough when completed
+            Text(assignment.title)
+                .font(.body)
+                .foregroundColor(MountainlandColors.smokeyBlack)
+                .strikethrough(assignment.isCompleted)
+            
+            Spacer()
+            
+            // MARK: - Completion Checkbox
+            /// Interactive checkbox for marking assignment complete/incomplete
+            /// Prevents tap from propagating to row tap gesture
+            Button(action: { Task { await onToggle() } }) {
+                Image(systemName: completionIcon)
+                    .font(.title3)
+                    .foregroundColor(assignment.isCompleted ?
+                        MountainlandColors.smokeyBlack : MountainlandColors.battleshipGray)
+            }
+            .buttonStyle(PlainButtonStyle())
         }
-        .padding()  // Internal padding for comfortable content spacing
-        .background(MountainlandColors.adaptiveCard)  // Card background with dark mode support
-        .cornerRadius(8)  // Subtle rounding for modern card appearance
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .contentShape(Rectangle())  // Makes entire row tappable
+        .onTapGesture(perform: onTap)  // Tap opens detail view
     }
+}
+
+// MARK: - Preview
+/// Xcode preview showing individual assignments view with sample data
+#Preview {
+    IndividualAssignmentsView(
+        courseSection: CurriculumModule(
+            id: "02",
+            title: "Tables & Persistence",
+            dateRange: "Oct 1 - Nov 15",
+            assignmentTypes: []
+        ),
+        assignmentType: AssignmentTypeSummary(
+            id: "labs",
+            title: "Labs & Projects",
+            completedCount: 0,
+            totalCount: 14,
+            assignments: [Assignment.placeholder]
+        )
+    )
+    .modelContainer(for: [Assignment.self], inMemory: true)
 }

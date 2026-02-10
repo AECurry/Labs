@@ -124,7 +124,10 @@ struct AssignmentRowView: View {
                 dueDate: Date().addingTimeInterval(86400), // Tomorrow
                 lessonID: "02",
                 assignmentType: .lab,
-                markdownDescription: "# List.Form Lab\n\nPractice creating lists and forms in SwiftUI."
+                markdownDescription: "# List.Form Lab\n\nPractice creating lists and forms in SwiftUI.",
+                completionDate: nil,
+                assignedOn: Date().addingTimeInterval(-86400 * 2), // Assigned 2 days ago
+                faqs: []
             ),
             onToggleComplete: {
                 print("Toggled completion")
@@ -143,7 +146,10 @@ struct AssignmentRowView: View {
                 dueDate: Date().addingTimeInterval(-86400), // Yesterday
                 lessonID: "02",
                 assignmentType: .project,
-                markdownDescription: "# Overdue Assignment\n\nThis assignment is overdue."
+                markdownDescription: "# Overdue Assignment\n\nThis assignment is overdue.",
+                completionDate: nil,
+                assignedOn: Date().addingTimeInterval(-86400 * 5), // Assigned 5 days ago
+                faqs: []
             ),
             onToggleComplete: {
                 print("Toggled completion")
@@ -163,7 +169,9 @@ struct AssignmentRowView: View {
                 lessonID: "02",
                 assignmentType: .codeChallenge,
                 markdownDescription: "# Completed Assignment\n\nThis assignment is already done.",
-                completionDate: Date()
+                completionDate: Date(),
+                assignedOn: Date().addingTimeInterval(-86400 * 7), // Assigned 7 days ago
+                faqs: []
             ),
             onToggleComplete: {
                 print("Toggled completion")

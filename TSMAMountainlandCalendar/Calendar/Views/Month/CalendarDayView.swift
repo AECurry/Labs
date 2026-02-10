@@ -7,61 +7,62 @@
 
 import SwiftUI
 
-// MARK: - Calendar Day View
-/// This file creates the individual day square the user sees in the monthly calendar grid.
-/// Shows date number with holiday highlighting (full circile around the number) and today indicator(small circle underneath the number) both are in burgundy1.
-/// When you tap a day, it triggers the onSelect action.
-/// No visual change when selected (just the tap action).
-/// This is the building block that gets repeated 35-42 times to create the monthly calendar view.
-
+// *Calendar Day View
+/// Represents a single day square in the monthly calendar grid
+/// Displays the day number with visual indicators for holidays and today
+/// Tapping a day triggers the `onSelect` closure
+/// Reused multiple times (35–42) to build the full month view
 struct CalendarDayView: View {
-    // MARK: - Properties
-    let day: CalendarDay           // Data model containing day information
-    let userRole: UserRole         // User role for potential permission-based styling
-    let isSelected: Bool           // Whether this day is currently selected
-    let onSelect: () -> Void       // Callback when day is tapped
     
-    // MARK: - Body
+    // *Properties / Dependencies
+    
+    let day: CalendarDay      // Model containing day info (number, date, holiday, today)
+    let userRole: UserRole    // Role info (used for potential role-based styling)
+    let isSelected: Bool      // Tracks whether this day is selected (currently only for logic)
+    let onSelect: () -> Void  // Action triggered when user taps this day
+    
     var body: some View {
-        // Interactive day button
-        Button(action: onSelect) {
+        // *Day Button
+        Button(action: {
+            // Debug log and trigger selection
+            print("📅 Calendar day tapped: \(day.number) - \(day.date)")
+            onSelect()
+        }) {
             VStack(spacing: 0) {
-                // MARK: - Date Number Display
-                /// Shows the day number with holiday highlighting
+                
+                // *Day Number / Holiday Highlight
                 ZStack {
-                    // Holiday circle background (keep this)
                     if day.isHoliday {
+                        // Holiday circle background
                         Circle()
-                            .fill(MountainlandColors.burgundy1)  // Brand color for holidays
-                            .frame(width: 36, height: 36)       // Circular highlight behind number
+                            .fill(MountainlandColors.burgundy1)
+                            .frame(width: 36, height: 36)
                     }
                     
-                    // Date number - No visual change for selection
+                    // Day number text
                     Text(day.number)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(
-                            day.isHoliday ? .white :                    // White text on holiday background
-                            (day.isCurrentMonth ? MountainlandColors.smokeyBlack : .gray.opacity(0.5))  // Black for current month, gray for other months
+                            day.isHoliday ? .white :
+                            (day.isCurrentMonth ? MountainlandColors.smokeyBlack : .gray.opacity(0.5))
                         )
                 }
-                .frame(height: 36)  // Fixed height for date number area
+                .frame(height: 36)
                 
-                // MARK: - Today Indicator
-                /// Shows dot below date for today, otherwise empty space
+                // *Today Indicator
                 if day.isToday {
                     Circle()
-                        .fill(MountainlandColors.burgundy1)  // Same brand color as holidays
-                        .frame(width: 8, height: 8)          // Small dot indicator
-                        .padding(.top, -4)                   // Negative padding to pull dot closer to number
+                        .fill(MountainlandColors.burgundy1)
+                        .frame(width: 8, height: 8)
+                        .padding(.top, -4)
                 } else {
-                    // REMOVED: Selection dot
                     Spacer()
-                        .frame(height: 8)  // Maintain consistent spacing even when no dot
+                        .frame(height: 8)
                 }
             }
-            .frame(height: 46)          // Total fixed height for the day cell
-            .frame(maxWidth: .infinity)  // Expands to fill available grid space
+            .frame(height: 46)
+            .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.plain)  // Removes default button styling for clean appearance
+        .buttonStyle(.plain) // Prevents default button styling
     }
 }

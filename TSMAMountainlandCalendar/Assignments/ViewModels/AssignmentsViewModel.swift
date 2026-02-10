@@ -7,93 +7,98 @@
 
 import Foundation
 import Observation
+import SwiftData
 
-// MARK: - Assignments ViewModel
+// *Assignments ViewModel
 /// Manages curriculum modules, assignment categories, and completion tracking
-/// Provides navigation state and assignment organization for the assignments section
-/// Uses @Observable for reactive UI updates following MVVM architecture
-/// Integrates with APIController for real assignment data from the server
+/// Provides reactive state for the assignments section
+/// Integrates with APIController for fetching and updating real assignment data
+/// Uses @Observable for SwiftUI state binding following MVVM architecture
 @Observable
 class AssignmentsViewModel {
-    // MARK: - State Properties
     
-    /// All assignments loaded from the API for the current cohort
-    /// Contains complete assignment data with progress tracking and due dates
-    /// Used for displaying assignments in lists and organizing by status
-    var assignments: [Assignment] = []
+    // *Core Properties
+    var assignments: [Assignment] = []                     // All assignments fetched from API
+    var selectedModule: CurriculumModule?                 // Currently selected module
+    var selectedAssignmentType: AssignmentTypeSummary?    // Currently selected assignment type
+    var isLoading = false                                 // Indicates whether data is being loaded
+    var errorMessage: String?                             // Holds API or processing errors
     
-    /// Currently selected curriculum module for navigation
-    /// Used when drilling down into a specific course section
-    var selectedModule: CurriculumModule?
-    
-    /// Currently selected assignment type within a module
-    /// Used when viewing individual assignments in a category
-    var selectedAssignmentType: AssignmentTypeSummary?
-    
-    /// Loading state indicator for asynchronous operations
-    /// Controls UI display of progress indicators during API calls
-    var isLoading = false
-    
-    /// Error message for display when operations fail
-    /// Provides user-friendly error feedback for network or API issues
-    var errorMessage: String?
-    
-    // MARK: - Data Loading
-    
-    /// Loads all assignments for the current cohort from the API
-    /// Fetches comprehensive assignment data including progress and FAQs
-    /// Implements proper error handling and loading state management
+    // *Load Assignments
+    /// Fetches all assignments from the API and updates local state
+    /// Handles authentication, API errors, and state updates on MainActor
     func loadAssignments() async {
-        // Set loading state
+        print("🚀 loadAssignments() called")
+        
         await MainActor.run {
             isLoading = true
             errorMessage = nil
         }
         
-        // Ensure loading state is reset regardless of success or failure
-        // Uses defer block for guaranteed cleanup to maintain code robustness
         defer {
             Task { @MainActor in
                 isLoading = false
+                print("✅ loadAssignments() finished")
             }
         }
         
+        print("🔐 Checking authentication...")
+        print("   isAuthenticated: \(APIController.shared.isAuthenticated)")
+        print("   userSecret: \(APIController.shared.userSecret?.uuidString ?? "NIL")")
+        
+        guard APIController.shared.isAuthenticated else {
+            print("❌ Not authenticated - returning early")
+            await MainActor.run {
+                errorMessage = "Please log in to access assignments"
+            }
+            return
+        }
+        
+        print("✅ Authenticated - fetching assignments...")
+        
         do {
-            // Fetch from API using standardized APIController service method
             let apiAssignments = try await APIController.shared.fetchAllAssignments()
             
-            // Convert API DTO responses to internal Assignment models
-            // Uses Assignment's from(dto:) initializer for consistent data transformation
+            // 🔍 DEBUG: Print what we're actually getting
+            print("📦 API returned \(apiAssignments.count) assignments")
+            if let first = apiAssignments.first {
+                print("📝 Sample assignment:")
+                print("   ID: \(first.id)")
+                print("   Name: \(first.name)")
+                print("   Type: \(first.assignmentType)")
+                print("   Due Date: \(first.dueOn?.description ?? "NIL")")
+                print("   Assigned On: \(first.assignedOn?.description ?? "NIL")")
+                print("   Body preview: \(first.body?.prefix(100) ?? "NIL")")
+            }
+            
             let convertedAssignments = apiAssignments.map { Assignment(from: $0) }
             
-            // Update state on main thread for thread-safe UI updates
             await MainActor.run {
                 assignments = convertedAssignments
             }
             
         } catch {
-            // Handle API errors gracefully with user-friendly messages
+            print("❌ Error fetching assignments: \(error)")
             await MainActor.run {
                 errorMessage = handleAPIError(error)
             }
         }
     }
     
-    // MARK: - Assignment Progress Management
-    
-    /// Toggles assignment completion status via API with proper result handling
-    /// Updates local state after successful API submission for immediate UI feedback
-    /// - Parameter assignment: The assignment to toggle completion status for
-    /// - Returns: Boolean indicating success (true) or failure (false) of the operation
-    /// Implements robust error handling and state synchronization
+    // *Toggle Assignment Completion (API Only)
+    /// Marks an assignment as complete or not started and updates the API
+    /// Returns true if the operation succeeds
+    /// Note: Assignment completion is now primarily managed by SwiftData
+    /// This method is for API synchronization only
     func toggleAssignmentCompletion(_ assignment: Assignment) async -> Bool {
-        // Determine the new progress state based on current completion status
-        // Supports three valid states: "notStarted", "inProgress", and "complete"
+        print("🌐 Toggling assignment completion via API: \(assignment.title)")
+        
+        // Determine new progress state for API
         let newProgress = assignment.isCompleted ? "notStarted" : "complete"
         
-        // Validate assignment ID can be converted to UUID for API compatibility
-        // Prevents API calls with invalid or malformed assignment identifiers
+        // Validate assignment ID can be converted to UUID
         guard let assignmentUUID = UUID(uuidString: assignment.assignmentID) else {
+            print("❌ Invalid assignment identifier format: \(assignment.assignmentID)")
             await MainActor.run {
                 errorMessage = "Invalid assignment identifier format"
             }
@@ -101,33 +106,18 @@ class AssignmentsViewModel {
         }
         
         do {
-            // Submit progress update to API and capture returned data
-            // The API returns updated AssignmentResponseDTO with new progress state
-            // The underscore (_) discards the unused return value intentionally
-            // We update local state directly instead of using returned DTO
+            // Submit progress to API
+            print("📡 Submitting progress to API: \(newProgress)")
             _ = try await APIController.shared.submitAssignmentProgress(
                 assignmentID: assignmentUUID,
                 progress: newProgress
             )
             
-            // Create updated local assignment with new completion status
-            // Uses current date as completion timestamp for "complete" state
-            // Sets completionDate to nil for "notStarted" state
-            var updatedAssignment = assignment
-            updatedAssignment.completionDate = (newProgress == "complete") ? Date() : nil
-            
-            // Update local assignments array on main thread
-            // Maintains data consistency between server and client state
-            await MainActor.run {
-                if let index = assignments.firstIndex(where: { $0.assignmentID == assignment.assignmentID }) {
-                    assignments[index] = updatedAssignment
-                }
-            }
-            
+            print("✅ API progress update successful")
             return true
             
         } catch {
-            // Handle API errors with user-friendly messaging
+            print("❌ Error updating API: \(error)")
             await MainActor.run {
                 errorMessage = handleAPIError(error)
             }
@@ -135,12 +125,67 @@ class AssignmentsViewModel {
         }
     }
     
-    // MARK: - Error Handling Utility
+    // *Toggle Assignment Completion with SwiftData Support
+    /// Comprehensive completion toggle that updates both SwiftData and API
+    /// Primary method for handling assignment completion in the app
+    /// Returns true if operation succeeds on both fronts (or at least SwiftData)
+    func toggleAssignmentCompletion(_ assignment: Assignment, context: ModelContext? = nil) async -> Bool {
+        print("🔄 Comprehensive toggle for: \(assignment.title)")
+        
+        // First update SwiftData if context is provided
+        var swiftDataSuccess = true
+        if let context = context {
+            swiftDataSuccess = await toggleAssignmentInSwiftData(assignment, context: context)
+        }
+        
+        // Then update API (secondary, for synchronization)
+        let apiSuccess = await toggleAssignmentCompletion(assignment)
+        
+        // Return success if either operation succeeded
+        // SwiftData success is prioritized since it's required for UI
+        return swiftDataSuccess || apiSuccess
+    }
     
-    /// Converts raw API errors to user-friendly localized messages
-    /// Provides appropriate messaging for different error types and HTTP status codes
-    /// - Parameter error: The raw Error object from failed API operation
-    /// - Returns: Localized string suitable for display in user interface
+    // *Toggle Assignment in SwiftData
+    /// Updates assignment completion status in local SwiftData storage
+    /// Primary method for persistent completion tracking
+    private func toggleAssignmentInSwiftData(_ assignment: Assignment, context: ModelContext) async -> Bool {
+        print("💾 Toggling assignment in SwiftData: \(assignment.title)")
+        
+        do {
+            // Fetch all assignments to find the matching one
+            let descriptor = FetchDescriptor<Assignment>()
+            let allAssignments = try context.fetch(descriptor)
+            
+            // Find assignment by ID
+            if let assignmentToUpdate = allAssignments.first(where: { $0.assignmentID == assignment.assignmentID }) {
+                // Toggle completion date
+                assignmentToUpdate.completionDate = assignmentToUpdate.isCompleted ? nil : Date()
+                
+                // Save to SwiftData
+                try context.save()
+                
+                // Update local array reference
+                await MainActor.run {
+                    if let index = assignments.firstIndex(where: { $0.assignmentID == assignment.assignmentID }) {
+                        assignments[index] = assignmentToUpdate
+                    }
+                }
+                
+                print("✅ SwiftData update successful: \(assignmentToUpdate.isCompleted)")
+                return true
+            } else {
+                print("⚠️ Assignment not found in SwiftData: \(assignment.assignmentID)")
+                return false
+            }
+        } catch {
+            print("❌ Error updating SwiftData: \(error)")
+            return false
+        }
+    }
+    
+    // *Error Handling
+    /// Converts API or Swift errors into user-friendly messages
     private func handleAPIError(_ error: Error) -> String {
         if let apiError = error as? APIError {
             switch apiError {
@@ -149,7 +194,6 @@ class AssignmentsViewModel {
             case .networkError:
                 return "Network error. Please check your internet connection"
             case .serverError(let code):
-                // Special handling for 404 errors during API development phase
                 if code == 404 {
                     return "Assignment API endpoint is not available yet. Please try again later."
                 }
@@ -163,65 +207,42 @@ class AssignmentsViewModel {
         return "Failed to load assignments: \(error.localizedDescription)"
     }
     
-    // MARK: - Assignment Organization Methods
-    
-    /// Organizes assignments by their current academic status for clear UI presentation
-    /// Categorizes assignments into three logical groups: overdue, upcoming, and completed
-    /// - Returns: Tuple containing three filtered arrays of Assignment objects
-    ///   - overdue: Assignments past due date and not completed
-    ///   - upcoming: Assignments not due yet and not completed
-    ///   - completed: Assignments marked as complete by the user
-    /// Uses computed properties on Assignment model for clean, declarative filtering
+    // *Assignment Filtering
+    /// Returns assignments grouped by status: overdue, upcoming, completed
     func assignmentsByStatus() -> (overdue: [Assignment],
                                    upcoming: [Assignment],
                                    completed: [Assignment]) {
-        // Filter assignments using computed properties for clean, readable code
-        // The 'isOverdue' property handles date comparison logic internally
         let overdue = assignments.filter { $0.isOverdue }
-        
-        // The 'isCompleted' property checks for non-nil completionDate
         let completed = assignments.filter { $0.isCompleted }
-        
-        // Combine both conditions for upcoming assignments (not complete, not overdue)
         let upcoming = assignments.filter { !$0.isCompleted && !$0.isOverdue }
         
         return (overdue, upcoming, completed)
     }
     
-    // MARK: - Navigation State Management
-    
-    /// Selects a curriculum module for detailed view navigation
-    /// Updates navigation state and clears any previous assignment type selection
-    /// - Parameter module: The curriculum module to select for detailed viewing
+    // *Selection Methods
+    /// Sets the currently selected module and resets assignment type selection
     func selectModule(_ module: CurriculumModule) {
         selectedModule = module
-        selectedAssignmentType = nil // Clear assignment type selection
+        selectedAssignmentType = nil
     }
     
-    /// Selects an assignment type for individual assignment list view
-    /// Updates navigation state for drilling down into specific assignment categories
-    /// - Parameter assignmentType: The assignment category to select for detailed viewing
+    /// Sets the currently selected assignment type
     func selectAssignmentType(_ assignmentType: AssignmentTypeSummary) {
         selectedAssignmentType = assignmentType
     }
     
-    // MARK: - Computed Properties for Data Analysis
-    
-    /// Returns total number of assignments loaded from API
-    /// Provides quick count for UI displays and progress calculations
+    // *Computed Properties
+    /// Total number of assignments loaded
     var totalAssignments: Int {
         assignments.count
     }
     
-    /// Returns total number of completed assignments
-    /// Used for progress tracking and completion statistics
+    /// Number of completed assignments
     var completedAssignments: Int {
         assignments.filter { $0.isCompleted }.count
     }
     
-    /// Calculates overall completion percentage across all assignments
-    /// Returns value between 0.0 (no assignments complete) and 1.0 (all assignments complete)
-    /// Used for progress visualization and completion tracking UI elements
+    /// Overall completion percentage (0.0 to 1.0)
     var overallCompletionPercentage: Double {
         guard totalAssignments > 0 else { return 0.0 }
         return Double(completedAssignments) / Double(totalAssignments)

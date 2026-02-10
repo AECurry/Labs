@@ -7,48 +7,50 @@
 
 import Foundation
 
-// MARK: - Assignment Type Summary
+// *Assignment Type Summary
 /// Represents a category of assignments (Labs, Code Challenges, Vocab Quizzes, etc.)
 /// Groups related assignments together and tracks completion progress
 struct AssignmentTypeSummary: Identifiable {
-    // MARK: - Core Properties
+    
+    // *Core Properties
     let id: String                      // Unique identifier for this assignment type
     let title: String                   // Display name (e.g., "Labs & Projects")
     let completedCount: Int             // Number of completed assignments
     let totalCount: Int                 // Total number of assignments in this category
     let assignments: [Assignment]       // All assignments in this category
     
-    // MARK: - Computed Properties
+    // *Computed Properties
     /// Returns true if all assignments in this category are completed
     var isComplete: Bool {
         completedCount == totalCount && totalCount > 0
     }
     
-    /// Calculates completion percentage as a decimal (0.0 to 1.0)
-    /// Used for progress circle visualizations
+    /// Returns completion percentage as a decimal (0.0 to 1.0)
+    /// Useful for progress circle visualization
     var completionPercentage: Double {
         guard totalCount > 0 else { return 0.0 }
         return Double(completedCount) / Double(totalCount)
     }
 }
 
-// MARK: - Curriculum Module
-/// Represents a course section or module containing multiple assignment types
-/// Organizes the curriculum into logical units with date ranges
+// *Curriculum Module
+/// Represents a course module containing multiple assignment types
+/// Organizes the curriculum into logical units with titles, date ranges, and assignments
 struct CurriculumModule: Identifiable {
-    // MARK: - Core Properties
-    let id: String                              // Module identifier (e.g., "01", "02", "03")
-    let title: String                           // Module title (e.g., "SwiftUI Basics")
-    let dateRange: String                       // When this module runs (e.g., "Oct 1 - Nov 15")
-    let assignmentTypes: [AssignmentTypeSummary] // Categories of assignments in this module
     
-    // MARK: - Computed Properties
-    /// Returns the total number of assignments across all types in this module
+    // *Core Properties
+    let id: String                              // Module identifier (e.g., "01")
+    let title: String                           // Module title (e.g., "SwiftUI Basics")
+    let dateRange: String                       // Module date range (e.g., "Oct 1 - Nov 15")
+    let assignmentTypes: [AssignmentTypeSummary] // Assignment categories in this module
+    
+    // *Computed Properties
+    /// Total assignments across all assignment types
     var totalAssignments: Int {
         assignmentTypes.reduce(0) { $0 + $1.totalCount }
     }
     
-    /// Returns the total number of completed assignments across all types
+    /// Total completed assignments across all assignment types
     var completedAssignments: Int {
         assignmentTypes.reduce(0) { $0 + $1.completedCount }
     }
@@ -58,23 +60,23 @@ struct CurriculumModule: Identifiable {
         totalAssignments > 0 && completedAssignments == totalAssignments
     }
     
-    /// Calculates overall module completion percentage (0.0 to 1.0)
+    /// Overall module completion percentage (0.0 to 1.0)
     var completionPercentage: Double {
         guard totalAssignments > 0 else { return 0.0 }
         return Double(completedAssignments) / Double(totalAssignments)
     }
 }
 
-// MARK: - Course Section (Legacy Support)
+// *Course Section (Legacy Support)
 /// Legacy model for course section display
-/// Maintains compatibility with existing views while transitioning to CurriculumModule
+/// Maintains compatibility while transitioning to CurriculumModule
 struct CourseSection: Identifiable {
     let id = UUID()
-    let number: String      // Section number (e.g., "01", "02")
+    let number: String      // Section number (e.g., "01")
     let title: String       // Section title
-    let dateRange: String   // Date range for this section
+    let dateRange: String   // Section date range
     
-    // MARK: - Conversion Method
+    // *Conversion Method
     /// Converts CourseSection to CurriculumModule format
     /// Provides empty assignment types array for basic navigation
     func toCurriculumModule() -> CurriculumModule {
@@ -87,10 +89,10 @@ struct CourseSection: Identifiable {
     }
 }
 
-// MARK: - Demo Data
+// *Demo Data
+/// Sample course sections for development and testing
+/// Represents a typical iOS development curriculum structure
 extension CourseSection {
-    /// Sample course sections for development and testing
-    /// Represents a typical iOS development curriculum structure
     static let demoData: [CourseSection] = [
         CourseSection(
             number: "01",
@@ -125,10 +127,10 @@ extension CourseSection {
     ]
 }
 
-// MARK: - Demo Curriculum Modules
+// *Demo Curriculum Modules
+/// Sample modules with assignment data for testing
+/// Demonstrates structure with assignment type summaries
 extension CurriculumModule {
-    /// Sample curriculum modules with assignment data for testing
-    /// Demonstrates the full data structure with assignments
     static let demoModules: [CurriculumModule] = [
         CurriculumModule(
             id: "01",

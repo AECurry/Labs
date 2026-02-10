@@ -1,5 +1,5 @@
 //
-//  MonthView.swift (UPDATED VERSION)
+//  MonthView.swift
 //  TSMAMountainlandCalendar
 //
 //  Created by AnnElaine on 11/7/25.
@@ -7,50 +7,54 @@
 
 import SwiftUI
 
-// MARK: - Month View
-/// Main container view that displays a complete monthly calendar
-/// Includes weekday labels and the calendar grid with styling
-/// Header has been moved to CalendarView for better tap gesture handling
+// *Month View
+/// Displays a full monthly calendar grid with weekday labels
+/// Handles layout and styling for the month container
+/// Header is moved to CalendarView to simplify tap gestures
 struct MonthView: View {
-    // MARK: - Properties
-    @Binding var selectedDate: Date  // Currently selected date (two-way binding)
     
-    // Define columns once and share them
-    /// 7-column grid layout for calendar days (Sunday through Saturday)
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
+    // *Binding Properties
+    @Binding var selectedDate: Date   // Tracks currently selected date in the month view
     
-    // MARK: - Body
+    // *Layout Properties
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7) // 7 columns for days of the week
+    
     var body: some View {
         VStack(spacing: 0) {
-            // MARK: - Calendar Container
-            /// White card containing the calendar grid with shadow and rounded corners
+            
+            // *Month Container
             VStack(spacing: 0) {
-                // Weekday headers (S M T W T F S)
-                WeekdayHeaderView(columns: columns)
-                    .padding(.horizontal, 0)  // No horizontal padding
                 
-                // Main calendar grid with days
+                // *Weekday Labels
+                /// Displays "Sun, Mon, Tue..." across the top of the month grid
+                WeekdayHeaderView(columns: columns)
+                    .padding(.horizontal, 0)
+                
+                // *Calendar Grid
+                /// Displays each day of the month in a 7-column grid
                 CalendarGridView(
                     currentDate: selectedDate,
-                    selectedDate: $selectedDate,  // Pass the binding down
+                    selectedDate: $selectedDate,
                     columns: columns
                 )
-                .padding(.horizontal, 0)  // No horizontal padding
+                .padding(.horizontal, 0)
             }
-            .padding(16)  // Internal padding within the white card
-            .background(Color.white)  // White card background
-            .cornerRadius(12)  // Rounded corners for the card
+            .padding(16)
+            .background(Color.white)  // White card background for month
+            .cornerRadius(12)         // Rounded corners for card effect
             .shadow(
-                color: .black.opacity(0.1),  // Subtle shadow
+                color: .black.opacity(0.1),
                 radius: 3,
                 x: 0,
                 y: 2
             )
-            .padding(.horizontal, 16)  // External padding from screen edges
+            .padding(.horizontal, 16) // Outer horizontal spacing for the month container
         }
     }
 }
 
+// *Preview
+/// Provides Xcode live preview with a constant date binding
 #Preview {
     MonthView(selectedDate: .constant(Date()))
 }

@@ -5,104 +5,104 @@
 //  Created by AnnElaine on 11/11/25.
 //
 
+// *Assignment Type Card
+/// Represents a "folder" containing multiple assignments (Labs, Challenges, Quizzes, etc.)
+/// Shows category title, progress percentage, and completion status
+/// Tappable card that navigates to assignments in this category
+/// Features circular progress visualization with dynamic icon for complete/incomplete status
 import SwiftUI
 
-// MARK: - Assignment Type Card
-/// AssignmentTypeCard = Like a "folder" that contains many assignments
-/// AssignmentRowView = a file that goes  inside this folder
-/// Displays an assignment category with progress visualization and completion status
-/// Features a circular progress indicator and tappable card design for navigation
 struct AssignmentTypeCard: View {
-    // MARK: - Properties
-    let assignmentType: AssignmentTypeSummary  // Assignment category data to display
-    let onSelect: () -> Void                   // Closure called when card is tapped
     
-    // MARK: - Computed Properties
-    /// Determines progress circle color based on completion status
-    /// Green for fully complete categories, burgundy for incomplete
+    // *State / Properties
+    /// Assignment category data to display (title, progress, list of assignments)
+    let assignmentType: AssignmentTypeSummary
+    
+    /// Closure called when card is tapped
+    let onSelect: () -> Void
+    
+    // *Computed Properties
+    /// Determines progress circle color based on completion
+    /// Green if fully complete, burgundy if incomplete
     private var progressColor: Color {
         assignmentType.isComplete ? MountainlandColors.pigmentGreen : MountainlandColors.burgundy1
     }
     
-    // MARK: - Body
+    // *Body
+    /// Main view for the assignment type card
+    /// Displays circular progress indicator, title, stats, and navigation chevron
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: 20) {
-                // MARK: - Progress Circle Visualization
-                /// Circular progress indicator showing completion percentage
-                /// Shows checkmark icon when complete, list icon when incomplete
+                
+                // *Progress Circle
+                /// Circular progress indicator visualizing completion percentage
+                /// Checkmark icon when complete, bullet list when incomplete
                 ZStack {
-                    // MARK: - Background Circle
-                    /// Static gray circle showing total possible progress
+                    // Background circle showing total assignments
                     Circle()
                         .stroke(MountainlandColors.platinum, lineWidth: 4)
                     
-                    // MARK: - Progress Arc
-                    /// Colored arc representing completed percentage
-                    /// Rotated -90 degrees to start from top position
+                    // Foreground arc representing completed assignments
                     Circle()
                         .trim(from: 0, to: CGFloat(assignmentType.completionPercentage))
                         .stroke(progressColor, lineWidth: 4)
-                        .rotationEffect(.degrees(-90))
+                        .rotationEffect(.degrees(-90)) // Start from top
                     
-                    // MARK: - Center Icon
-                    /// Checkmark for complete categories, bullet list for incomplete
+                    // Center icon
                     Image(systemName: assignmentType.isComplete ? "checkmark" : "list.bullet")
                         .font(.body)
                         .fontWeight(.bold)
                         .foregroundColor(progressColor)
                 }
-                .frame(width: 40, height: 40)  // Fixed size for consistent layout
+                .frame(width: 40, height: 40) // Fixed size for layout consistency
                 
-                // MARK: - Content Information
-                /// Text content showing category title and completion statistics
+                // *Content Info
+                /// Category title and completion stats
                 VStack(alignment: .leading, spacing: 6) {
-                    // MARK: - Category Title
-                    /// Assignment type name (e.g., "Labs & Projects")
+                    
+                    // Category title
                     Text(assignmentType.title)
                         .font(.title3)
                         .fontWeight(.semibold)
                         .foregroundColor(MountainlandColors.smokeyBlack)
                     
-                    // MARK: - Completion Statistics
-                    /// Count of completed assignments vs total assignments
+                    // Completion statistics
                     Text("\(assignmentType.completedCount)/\(assignmentType.totalCount) completed")
                         .font(.body)
                         .foregroundColor(MountainlandColors.battleshipGray)
                 }
                 
-                Spacer()  // Pushes chevron to trailing edge
+                Spacer() // Push chevron to trailing edge
                 
-                // MARK: - Navigation Chevron
-                /// Indicates card is tappable and leads to another screen
+                // *Navigation Chevron
+                /// Indicates card is tappable
                 Image(systemName: "chevron.right")
                     .font(.body)
                     .foregroundColor(MountainlandColors.battleshipGray)
             }
-            .padding(.vertical, 88)  // Tall vertical padding for large tap target
+            .padding(.vertical, 88)    // Tall vertical padding for large tap target
             .padding(.horizontal, 24)  // Side padding for content spacing
-            .background(MountainlandColors.adaptiveCard)  // Card background color
-            .cornerRadius(16)  // Rounded card corners
+            .background(MountainlandColors.adaptiveCard) // Card background
+            .cornerRadius(16)          // Rounded card corners
             .overlay(
-                // MARK: - Card Border
-                /// Subtle border around card for visual definition
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(MountainlandColors.platinum, lineWidth: 1)
+                    .stroke(MountainlandColors.platinum, lineWidth: 1) // Subtle border
             )
         }
-        .buttonStyle(PlainButtonStyle())  // Removes default button styling
+        .buttonStyle(PlainButtonStyle()) // Remove default button styling
     }
 }
 
 // MARK: - Preview
 /// Xcode preview showing three assignment category states:
-/// - Incomplete (0/14 completed)
-/// - Complete (28/28 completed)
-/// - Partially complete (0/1 completed)
+/// 1. Incomplete (0/14 completed)
+/// 2. Complete (28/28 completed)
+/// 3. Partially complete (0/1 completed)
 #Preview {
     VStack(spacing: 16) {
-        // MARK: - Incomplete Labs Preview
-        /// Shows burgundy progress circle with list icon
+        
+        // Incomplete Labs Preview
         AssignmentTypeCard(
             assignmentType: AssignmentTypeSummary(
                 id: "labs",
@@ -116,8 +116,7 @@ struct AssignmentTypeCard: View {
             }
         )
         
-        // MARK: - Complete Challenges Preview
-        /// Shows green progress circle with checkmark icon
+        // Complete Challenges Preview
         AssignmentTypeCard(
             assignmentType: AssignmentTypeSummary(
                 id: "challenges",
@@ -131,8 +130,7 @@ struct AssignmentTypeCard: View {
             }
         )
         
-        // MARK: - Single Item Quiz Preview
-        /// Shows empty progress circle for 0/1 completion
+        // Single Item Quiz Preview
         AssignmentTypeCard(
             assignmentType: AssignmentTypeSummary(
                 id: "vocab",
@@ -146,6 +144,6 @@ struct AssignmentTypeCard: View {
             }
         )
     }
-    .padding()  // Preview container padding
-    .background(MountainlandColors.platinum)  // Preview background matching app
+    .padding()                           // Preview container padding
+    .background(MountainlandColors.platinum) // Preview background matching app
 }

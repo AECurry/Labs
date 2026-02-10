@@ -71,6 +71,10 @@ struct AssignmentOutlineView: View {
                     /// Large, prominent button for marking assignment complete/incomplete
                     Button(action: {
                         onToggleComplete()  // Toggles completion status
+                        // ✅ FIXED: Dismiss after toggling
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            dismiss()
+                        }
                     }) {
                         HStack {
                             Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")

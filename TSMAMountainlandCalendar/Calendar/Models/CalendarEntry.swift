@@ -9,56 +9,104 @@ import Foundation
 
 // MARK: - Calendar Entry Model
 /// Represents a single day in the academic calendar
-/// Defines what a "school day" looks like in the app - it's like a digital lesson plan that contains everything happening on a specific date
-/// Follows Single Responsibility Principle - only handles calendar data
-
+/// Acts as a digital lesson plan containing all data for a specific date
+/// Holds lesson details, assignments, and daily learning elements
 struct CalendarEntry: Identifiable, Hashable {
+    
     // MARK: - Core Properties
-    let id = UUID()                    // Unique identifier for SwiftUI lists
-    let date: Date                     // The instructional date this entry represents
-    let lessonID: String               // Unique lesson identifier (e.g., "TP17")
-    let lessonName: String             // Display name of the day's lesson
-    let mainObjective: String          // Primary learning goal for the day
-    let readingDue: String             // Reading assignments due for this lesson
-    let assignmentsDue: [Assignment]   // Assignments that must be submitted today
-    let newAssignments: [Assignment]   // New assignments introduced today
-    let codeChallenge: String          // Daily coding challenge title
-    let wordOfTheDay: String           // Vocabulary term for the day
-    let instructor: String             // Teacher leading the lesson
-    let lessonOutline: String          // Detailed lesson plan in markdown format
+    let id: UUID                       // Unique identifier from API
+    let date: Date                     // Date this entry represents
+    let holiday: Bool                  // Indicates if the day is a holiday
+    let dayID: String?                 // School day identifier (e.g., "TP17")
+    let lessonName: String?            // Display name of the lesson
+    let lessonID: UUID?                // Unique lesson identifier
+    let mainObjective: String?         // Primary learning objective
+    let readingDue: String?            // Reading assigned for the day
+    let assignmentsDue: [Assignment]   // Assignments due today
+    let newAssignments: [Assignment]   // Assignments introduced today
+    let dailyCodeChallengeName: String? // Daily coding challenge title
+    let wordOfTheDay: String?          // Vocabulary term for the day
     
     // MARK: - Computed Properties
-    /// Checks if any assignments are due today
-    /// Follows SOLID's Open/Closed principle - extendable without modification
+    
+    /// Indicates whether assignments are due today
     var hasAssignmentsDue: Bool {
         !assignmentsDue.isEmpty
     }
     
-    /// Checks if new assignments are being introduced today
+    /// Indicates whether new assignments are introduced today
     var hasNewAssignments: Bool {
         !newAssignments.isEmpty
     }
     
-    /// Determines if this calendar entry represents the current date
+    /// Determines if this entry represents today
     var isToday: Bool {
         Calendar.current.isDateInToday(date)
     }
     
-    /// Formats the date for user-friendly display
+    /// Indicates whether this day includes a lesson
+    var hasLesson: Bool {
+        !holiday && (lessonName != nil && !(lessonName?.isEmpty ?? true))
+    }
+    
+    /// Formats the date for display
     /// Example: "Tuesday 11/17/2025"
     var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE MM/dd/yyyy"
         return formatter.string(from: date)
     }
+    
+    /// Returns a user-friendly display name for the day
+    var displayName: String {
+        if holiday {
+            return "Holiday"
+        } else if let lessonName = lessonName, !lessonName.isEmpty {
+            return lessonName
+        } else {
+            return "No Lesson"
+        }
+    }
+}
+
+// MARK: - Hashable Conformance
+extension CalendarEntry {
+    static func == (lhs: CalendarEntry, rhs: CalendarEntry) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
+// MARK: - API Integration
+extension CalendarEntry {
+    
+    /// Initializes a CalendarEntry from an API response
+    /// Converts server data into the app’s internal model
+    init(from dto: CalendarEntryResponseDTO) {
+        self.id = dto.id
+        self.date = dto.date
+        self.holiday = dto.holiday
+        self.dayID = dto.dayID
+        self.lessonName = dto.lessonName
+        self.lessonID = dto.lessonID
+        self.mainObjective = dto.mainObjective
+        self.readingDue = dto.readingDue
+        self.dailyCodeChallengeName = dto.dailyCodeChallengeName
+        self.wordOfTheDay = dto.wordOfTheDay
+        
+        // Convert assignment DTOs into Assignment models
+        self.assignmentsDue = dto.assignmentsDue.map { Assignment(from: $0) }
+        self.newAssignments = dto.newAssignments.map { Assignment(from: $0) }
+    }
 }
 
 // MARK: - Placeholder Data
 extension CalendarEntry {
-    /// Sample calendar entries for development, testing, and previews
-    /// Represents a week of iOS development lessons with full academic content
-    /// Nov 14 (full demo), Nov 17–20 mock
-
+    
+    /// Sample calendar entries for previews and testing
     static var placeholders: [CalendarEntry] {
         let nov14 = createDate(year: 2025, month: 11, day: 14)
         let nov17 = createDate(year: 2025, month: 11, day: 17)
@@ -66,154 +114,127 @@ extension CalendarEntry {
         let nov19 = createDate(year: 2025, month: 11, day: 19)
         let nov20 = createDate(year: 2025, month: 11, day: 20)
         
+        // Shared lesson identifiers
+        let lessonID14 = UUID(uuidString: "23DB24CD-51F5-48BB-AB70-9B1CD1429A8E") ?? UUID()
+        let lessonID17 = UUID()
+        let lessonID18 = UUID()
+        let lessonID19 = UUID()
+        let lessonID20 = UUID()
+        
         return [
-            // FULL DEMO LESSON FOR TODAY (Nov 14)
+            // Full demo lesson (Nov 14)
             CalendarEntry(
+                id: UUID(),
                 date: nov14,
-                lessonID: "TT14",
+                holiday: false,
+                dayID: "TT14",
                 lessonName: "Pop-Up Feedback & Full Demo",
+                lessonID: lessonID14,
                 mainObjective: "Practice submitting feedback and demo the full Today/Calendar lesson view.",
                 readingDue: "Design Patterns: Pop-up Interactions",
                 assignmentsDue: [
                     Assignment(
-                        assignmentID: "Lab14",
+                        assignmentID: "LAB14",
                         title: "Feedback Pop-up",
                         dueDate: nov14,
                         lessonID: "TT14",
                         assignmentType: .lab,
                         markdownDescription: "Implement and test the feedback pop-up for today's lesson.",
-                        completionDate: nil
+                        completionDate: nil,
+                        assignedOn: nov14.addingTimeInterval(-86400 * 2),
+                        faqs: []
                     )
                 ],
                 newAssignments: [
                     Assignment(
                         assignmentID: "PJ14",
                         title: "Showcase Full Demo",
-                        dueDate: nov14.addingTimeInterval(86400*7),
+                        dueDate: nov14.addingTimeInterval(86400 * 7),
                         lessonID: "TT14",
                         assignmentType: .project,
                         markdownDescription: "Demo all main and feedback components to instructor.",
-                        completionDate: nil
+                        completionDate: nil,
+                        assignedOn: nov14,
+                        faqs: []
                     )
                 ],
-                codeChallenge: "Trigger and submit a demo feedback form.",
-                wordOfTheDay: "Demo",
-                instructor: "Ms. Taylor",
-                lessonOutline: "Use Today and Calendar view to show full card stack, assignments, and feedback pop-up."
+                dailyCodeChallengeName: "Trigger and submit a demo feedback form.",
+                wordOfTheDay: "Demo"
             ),
             CalendarEntry(
+                id: UUID(),
                 date: nov17,
-                lessonID: "A17",
+                holiday: false,
+                dayID: "A17",
                 lessonName: "Intro to Variables",
+                lessonID: lessonID17,
                 mainObjective: "Learn Swift variables and data types.",
                 readingDue: "Swift Programming: Chapter 1",
                 assignmentsDue: [],
                 newAssignments: [],
-                codeChallenge: "Create a Swift variable for your name.",
-                wordOfTheDay: "Variable",
-                instructor: "Ms. Taylor",
-                lessonOutline: "Intro, Variables, Practice"
+                dailyCodeChallengeName: "Create a Swift variable for your name.",
+                wordOfTheDay: "Variable"
             ),
             CalendarEntry(
+                id: UUID(),
                 date: nov18,
-                lessonID: "A18",
+                holiday: false,
+                dayID: "A18",
                 lessonName: "Control Flow",
+                lessonID: lessonID18,
                 mainObjective: "Learn if/else and loops.",
                 readingDue: "Chapter 2: Control Flow",
                 assignmentsDue: [],
                 newAssignments: [],
-                codeChallenge: "Make a guessing game using a loop.",
-                wordOfTheDay: "Loop",
-                instructor: "Ms. Taylor",
-                lessonOutline: "Conditionals, Loops, Practice"
+                dailyCodeChallengeName: "Make a guessing game using a loop.",
+                wordOfTheDay: "Loop"
             ),
             CalendarEntry(
+                id: UUID(),
                 date: nov19,
-                lessonID: "A19",
+                holiday: false,
+                dayID: "A19",
                 lessonName: "Functions",
+                lessonID: lessonID19,
                 mainObjective: "Define and call functions.",
                 readingDue: "Chapter 3: Functions",
                 assignmentsDue: [],
                 newAssignments: [],
-                codeChallenge: "Write a greeting function.",
-                wordOfTheDay: "Function",
-                instructor: "Ms. Taylor",
-                lessonOutline: "Functions, Return Values"
+                dailyCodeChallengeName: "Write a greeting function.",
+                wordOfTheDay: "Function"
             ),
             CalendarEntry(
+                id: UUID(),
                 date: nov20,
-                lessonID: "A20",
+                holiday: false,
+                dayID: "A20",
                 lessonName: "Project Practice",
+                lessonID: lessonID20,
                 mainObjective: "Practice building a full app.",
                 readingDue: "Chapter 4: App Project",
                 assignmentsDue: [],
                 newAssignments: [],
-                codeChallenge: "Start your project.",
-                wordOfTheDay: "Project",
-                instructor: "Ms. Taylor",
-                lessonOutline: "Project Review"
+                dailyCodeChallengeName: "Start your project.",
+                wordOfTheDay: "Project"
             )
         ]
     }
     
-    /// Returns today's calendar entry or nil if today isn't found
+    /// Returns today's calendar entry, if available
     static var today: CalendarEntry? {
         placeholders.first(where: { $0.isToday })
     }
     
-    // MARK: - Helper Function
-    /// Creates a date from year, month, and day components
-    /// Uses noon to avoid timezone-related date calculation issues
+    // MARK: - Helper Methods
+    
+    /// Creates a date using year, month, and day components
+    /// Uses noon to avoid timezone-related issues
     private static func createDate(year: Int, month: Int, day: Int) -> Date {
         var components = DateComponents()
         components.year = year
         components.month = month
         components.day = day
-        components.hour = 12 // Set to noon to avoid timezone issues
+        components.hour = 12
         return Calendar.current.date(from: components) ?? Date()
-    }
-}
-
-// MARK: - API Integration Extension
-extension CalendarEntry {
-    /// Initializes a CalendarEntry model from an API response DTO
-    /// Converts server-side data transfer objects to internal application models
-    /// Handles optional values with sensible defaults for missing or null data
-    /// - Parameter dto: CalendarEntryResponseDTO containing raw API response data
-    init(from dto: CalendarEntryResponseDTO) {
-        self.init(
-            // Required date field - always present in API response
-            date: dto.date,
-            
-            // Lesson identifier with fallback for missing or holiday entries
-            lessonID: dto.lessonID?.uuidString ?? "Unknown",
-            
-            // Lesson name with default for days without scheduled instruction
-            lessonName: dto.lessonName ?? "No Lesson",
-            
-            // Main objective with empty string fallback for holidays or missing data
-            mainObjective: dto.mainObjective ?? "",
-            
-            // Reading assignments with empty string fallback
-            readingDue: dto.readingDue ?? "",
-            
-            // Convert API assignment DTOs to internal Assignment models
-            assignmentsDue: Assignment.array(from: dto.assignmentsDue),
-            
-            // Convert API assignment DTOs to internal Assignment models for new assignments
-            newAssignments: Assignment.array(from: dto.newAssignments),
-            
-            // Daily code challenge name with empty string fallback
-            codeChallenge: dto.dailyCodeChallengeName ?? "",
-            
-            // Vocabulary word of the day with empty string fallback
-            wordOfTheDay: dto.wordOfTheDay ?? "",
-            
-            // Placeholder instructor name (TODO: Populate from API if available)
-            instructor: "Instructor",
-            
-            // Placeholder lesson outline (TODO: Fetch separately if needed)
-            lessonOutline: ""
-        )
     }
 }

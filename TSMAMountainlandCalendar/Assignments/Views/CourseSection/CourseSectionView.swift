@@ -7,119 +7,271 @@
 
 import SwiftUI
 
-// MARK: - Course Section View
-/// Simple view that shows course sections as cards
-/// Each card navigates to the assignment list for that section
-/// Provides navigation interface for accessing assignments by course section
-/// Uses API-based ViewModel for real assignment data retrieval
+/// Professional course section navigation screen
+/// Displays curriculum modules organized by course topics
+/// Integrates with API to show real assignment data and completion progress
 struct CourseSectionView: View {
-    // MARK: - Properties
-    
-    /// Sample course section data for navigation interface
-    /// Provides structured access to different course modules and topics
-    @State private var sections = CourseSection.demoData
-    
-    /// ViewModel instance managing assignment data loading and state
-    /// Uses @State wrapper for @Observable ViewModel with reactive updates
-    /// Fetches real assignment data from API for display in assignment lists
+    let currentUser: Student
     @State private var viewModel = AssignmentsViewModel()
-    
-    /// Environment value for programmatic view dismissal
-    /// Enables back navigation without relying on navigation stack alone
+    @State private var curriculumModules: [CurriculumModule] = []
     @Environment(\.dismiss) private var dismiss
     
-    /// Current authenticated student for personalized display
-    /// Provides user context for assignment filtering and display preferences
-    let currentUser: Student
-    
-    // MARK: - Body
-    /// Main view hierarchy defining course section navigation interface
-    /// Organizes content with custom header, title, and scrollable section cards
-    /// Implements navigation to assignment lists with filtered content
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // MARK: - Header with Profile and Back Button
-                /// Custom navigation bar with back functionality and user profile
-                /// Provides consistent navigation pattern across the application
-                HStack {
-                    // Back button for returning to previous screen
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.title3)
-                            .foregroundColor(.primary)
-                    }
-                    .padding(.leading, 8)
-                    
-                    Spacer()
-                    
-                    // User Profile Circle with student initials
-                    /// Visual representation of current user in navigation header
-                    /// Uses brand colors for consistent visual identity
-                    ZStack {
-                        Circle()
-                            .fill(MountainlandColors.burgundy2)
-                            .frame(width: 40, height: 40)
-                        
-                        Text(currentUser.initials)
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                    .padding(.trailing, 8)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                .padding(.bottom, 32)
+                // MARK: - Header
+                headerView
                 
-                // MARK: - Screen Title
-                /// Clear page title indicating content purpose and scope
-                /// Uses prominent typography for easy identification
+                // MARK: - Title
                 Text("Course Assignments")
                     .font(.title2)
                     .fontWeight(.bold)
                     .frame(maxWidth: .infinity)
                     .padding(.bottom, 40)
                 
-                // MARK: - Course Sections Content
-                /// Scrollable list of course section cards with navigation links
-                /// Each card represents a different course module or topic area
-                /// Tapping any card navigates to filtered assignment list for that section
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 16) {
-                        ForEach(sections) { section in
-                            NavigationLink {
-                                // Navigation destination: Assignment list filtered by section
-                                /// Passes all assignments since section-based filtering isn't implemented
-                                /// Future enhancement: Implement section-specific assignment filtering
-                                AssignmentListView(
-                                    currentUser: currentUser,
-                                    assignments: viewModel.assignments
-                                )
-                            } label: {
-                                // Course section card visual representation
-                                /// Uses reusable CourseSectionCard component with consistent styling
-                                CourseSectionCard(section: section, onTap: nil)
-                            }
-                            .padding(.horizontal, 16)
-                        }
-                    }
-                }
+                // MARK: - Content
+                contentView
             }
             .background(MountainlandColors.platinum.ignoresSafeArea())
             .navigationBarHidden(true)
         }
         .task {
-            // Load assignments when view appears
-            /// Triggers asynchronous API call to fetch assignment data
-            /// Provides data for assignment lists accessed through navigation
-            await viewModel.loadAssignments()
+            await loadData()
         }
+    }
+    
+    // MARK: - Header View
+    private var headerView: some View {
+        HStack {
+            Spacer()
+            
+            // User Profile Circle
+            ZStack {
+                Circle()
+                    .fill(MountainlandColors.burgundy2)
+                    .frame(width: 40, height: 40)
+                
+                Text(currentUser.initials)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+            }
+            .padding(.trailing, 8)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
+        .padding(.bottom, 32)
+    }
+    
+    // MARK: - Content View
+    @ViewBuilder
+    private var contentView: some View {
+        if viewModel.isLoading {
+            ProgressView("Loading assignments...")
+                .padding()
+                .frame(maxHeight: .infinity)
+        } else if let error = viewModel.errorMessage {
+            errorView(error)
+        } else if curriculumModules.isEmpty {
+            emptyStateView
+        } else {
+            moduleListView
+        }
+    }
+    
+    // MARK: - Module List
+    private var moduleListView: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                ForEach(curriculumModules) { module in
+                    NavigationLink {
+                        AssignmentCheckoffView(courseSection: module)
+                            .environment(viewModel)
+                    } label: {
+                        CurriculumModuleCard(module: module)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(.horizontal, 16)
+                }
+            }
+            .padding(.vertical, 8)
+        }
+    }
+    
+    // MARK: - Error View
+    private func errorView(_ error: String) -> some View {
+        VStack(spacing: 16) {
+            Spacer()
+            
+            Text("Error Loading Assignments")
+                .font(.headline)
+                .foregroundColor(MountainlandColors.smokeyBlack)
+            
+            Text(error)
+                .font(.body)
+                .foregroundColor(MountainlandColors.battleshipGray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+            
+            Button("Retry") {
+                Task { await loadData() }
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
+            .background(MountainlandColors.burgundy1)
+            .foregroundColor(.white)
+            .cornerRadius(8)
+            
+            Spacer()
+        }
+    }
+    
+    // MARK: - Empty State
+    private var emptyStateView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "folder")
+                .font(.system(size: 48))
+                .foregroundColor(MountainlandColors.battleshipGray)
+                .padding(.bottom, 8)
+            
+            Text("No Assignments Available")
+                .font(.headline)
+                .foregroundColor(MountainlandColors.smokeyBlack)
+            
+            Text("Check back later for new assignments")
+                .font(.body)
+                .foregroundColor(MountainlandColors.battleshipGray)
+        }
+        .frame(maxHeight: .infinity)
+    }
+    
+    // MARK: - Data Loading
+    private func loadData() async {
+        await viewModel.loadAssignments()
+        curriculumModules = organizeIntoCurriculumModules(viewModel.assignments)
+    }
+    
+    // MARK: - Curriculum Organization
+    private func organizeIntoCurriculumModules(_ assignments: [Assignment]) -> [CurriculumModule] {
+        guard !assignments.isEmpty else { return [] }
+        
+        // Define the 7 course sections from your curriculum
+        let courseSections = [
+            ("01", "Swift Fundamentals", "Aug 13 - Sept 31"),
+            ("02", "Tables & Persistence", "Oct 1 - Nov 15"),
+            ("03", "Networking & Data Storage", "Nov 15 - Dec 19"),
+            ("04", "SwiftUI & Special Topic", "Jan 8 - Feb 19"),
+            ("05", "Full App Development", "Feb 20 - March 15"),
+            ("06", "Prototyping & Project Plan...", "April 16 - May 1"),
+            ("07", "Group Capstone", "May 2 - May 20")
+        ]
+        
+        var modules: [CurriculumModule] = []
+        
+        // For now, put all assignments in each section
+        // Later we can filter by assignment ID patterns
+        for (id, title, dateRange) in courseSections {
+            let assignmentTypes = createAssignmentTypes(for: assignments)
+            
+            let module = CurriculumModule(
+                id: id,
+                title: title,
+                dateRange: dateRange,
+                assignmentTypes: assignmentTypes
+            )
+            
+            modules.append(module)
+        }
+        
+        return modules
+    }
+    
+    private func createAssignmentTypes(for assignments: [Assignment]) -> [AssignmentTypeSummary] {
+        let assignmentsByType = Dictionary(grouping: assignments) { $0.assignmentType }
+        
+        var types: [AssignmentTypeSummary] = []
+        
+        for (type, typeAssignments) in assignmentsByType {
+            let completedCount = typeAssignments.filter { $0.isCompleted }.count
+            let totalCount = typeAssignments.count
+            
+            let title: String
+            switch type {
+            case .lab, .project:
+                title = "Labs & Projects"
+            case .codeChallenge:
+                title = "Code Challenges"
+            case .vocabQuiz:
+                title = "Vocab Quiz"
+            case .reading:
+                title = "Reading"
+            }
+            
+            if let existingIndex = types.firstIndex(where: { $0.title == title }) {
+                types[existingIndex] = AssignmentTypeSummary(
+                    id: types[existingIndex].id,
+                    title: title,
+                    completedCount: types[existingIndex].completedCount + completedCount,
+                    totalCount: types[existingIndex].totalCount + totalCount,
+                    assignments: types[existingIndex].assignments + typeAssignments
+                )
+            } else {
+                let typeSummary = AssignmentTypeSummary(
+                    id: type.rawValue,
+                    title: title,
+                    completedCount: completedCount,
+                    totalCount: totalCount,
+                    assignments: typeAssignments
+                )
+                types.append(typeSummary)
+            }
+        }
+        
+        return types.sorted { $0.title < $1.title }
     }
 }
 
-// MARK: - Preview
-/// Xcode preview for design and layout testing during development
-/// Provides live preview with sample student data and interaction simulation
+// MARK: - Curriculum Module Card
+/// Professional card displaying course module with progress tracking
+struct CurriculumModuleCard: View {
+    let module: CurriculumModule
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top) {
+                Text(module.id)
+                    .font(.system(.title3, design: .rounded, weight: .semibold))
+                    .foregroundColor(MountainlandColors.burgundy1)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(module.title)
+                        .font(.system(.body, design: .rounded, weight: .medium))
+                        .foregroundColor(MountainlandColors.smokeyBlack)
+                        .multilineTextAlignment(.leading)
+                    
+                    Text(module.dateRange)
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundColor(MountainlandColors.battleshipGray)
+                    
+                    Text("\(module.completedAssignments)/\(module.totalAssignments) completed")
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundColor(MountainlandColors.battleshipGray)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(MountainlandColors.battleshipGray)
+            }
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .background(MountainlandColors.white)
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+    }
+}
+
 #Preview {
     CourseSectionView(currentUser: Student.demoStudents[0])
 }
