@@ -173,3 +173,4 @@ struct ImageAreaView_Previews: PreviewProvider {
         }
     }
 }
+

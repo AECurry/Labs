@@ -102,3 +102,4 @@ struct VisualizerBar: View {
     }
     .background(MasukiColors.adaptiveBackground)
 }
+

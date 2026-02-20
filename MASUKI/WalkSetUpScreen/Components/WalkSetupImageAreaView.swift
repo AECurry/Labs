@@ -97,3 +97,4 @@ struct WalkSetupImageAreaView: View {
         WalkSetupImageAreaView()
     }
 }
+

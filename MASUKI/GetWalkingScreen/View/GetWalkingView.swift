@@ -33,3 +33,4 @@ struct GetWalkingViewSimple: View {
 #Preview {
     GetWalkingViewSimple(onStartWalking: { print("Start Walking") })
 }
+

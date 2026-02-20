@@ -5,6 +5,8 @@
 //  Created by AnnElaine on 12/29/25.
 //
 
+//  Main parent file for the entire app
+
 import SwiftUI
 
 struct MasukiMainView: View {

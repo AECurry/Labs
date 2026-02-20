@@ -1,5 +1,5 @@
 //
-//  DurationDropdow.swift
+//  DurationDropdown.swift
 //  MASUKI
 //
 //  Created by AnnElaine on 1/2/26.
@@ -102,3 +102,4 @@ struct DurationOptionRow: View {
         .padding()
         .background(MasukiColors.adaptiveBackground)
 }
+

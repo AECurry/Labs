@@ -50,3 +50,4 @@ struct WalkSessionImageAreaView: View {
         WalkSessionImageAreaView()
     }
 }
+

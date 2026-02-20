@@ -77,3 +77,4 @@ struct ImageThemeCatalog {
         allThemes.removeAll { $0.id == id }
     }
 }
+

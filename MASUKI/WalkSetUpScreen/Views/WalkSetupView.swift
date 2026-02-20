@@ -38,7 +38,7 @@ struct WalkSetupViewSimple: View {
                         .padding(.horizontal, 24)
                         .padding(.bottom, 32)
                     
-                    MusicSelector(selectedMusic: $viewModel.selectedMusic)
+                    MusicDropdown(selectedMusic: $viewModel.selectedMusic)
                         .padding(.horizontal, 24)
                         .padding(.bottom, 40)
                     
@@ -64,3 +64,4 @@ struct WalkSetupViewSimple: View {
         onDismiss: { print("Dismiss") }
     )
 }
+

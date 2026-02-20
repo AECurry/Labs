@@ -112,3 +112,4 @@ final class DataPersistenceManager {
         print("Cleared all history")
     }
 }
+

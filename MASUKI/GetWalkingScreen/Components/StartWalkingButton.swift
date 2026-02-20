@@ -48,3 +48,4 @@ struct StartWalkingButton: View {
         print("Button tapped")
     }
 }
+

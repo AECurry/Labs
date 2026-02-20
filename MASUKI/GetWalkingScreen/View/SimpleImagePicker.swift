@@ -57,3 +57,4 @@ struct SimpleImagePicker: View {
         }
     }
 }
+

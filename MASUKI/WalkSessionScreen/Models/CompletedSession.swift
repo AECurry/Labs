@@ -52,3 +52,4 @@ struct CompletedSession: Identifiable, Codable {
         }
     }
 }
+

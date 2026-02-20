@@ -1,5 +1,5 @@
 //
-//  MusicSelector.swift
+//  MusicDropdown.swift
 //  MASUKI
 //
 //  Created by AnnElaine on 1/2/26.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct MusicSelector: View {
+struct MusicDropdown: View {
     @Binding var selectedMusic: MusicOption
     
     var body: some View {
@@ -51,13 +51,14 @@ struct MusicSelector: View {
 }
 
 #Preview {
-    MusicSelector(selectedMusic: .constant(.placeholder))
+    MusicDropdown(selectedMusic: .constant(.placeholder))
         .padding()
         .background(MasukiColors.adaptiveBackground)
 }
 
 #Preview {
-    MusicSelector(selectedMusic: .constant(.zenGarden))
+    MusicDropdown(selectedMusic: .constant(.zenGarden))
         .padding()
         .background(MasukiColors.adaptiveBackground)
 }
+

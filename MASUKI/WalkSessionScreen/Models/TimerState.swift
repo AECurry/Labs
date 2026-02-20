@@ -12,3 +12,4 @@ enum TimerState {
     case running
     case paused
 }
+

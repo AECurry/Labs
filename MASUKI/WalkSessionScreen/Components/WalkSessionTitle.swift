@@ -36,3 +36,4 @@ struct WalkSessionTitle: View {
     WalkSessionTitle()
         .background(MasukiColors.adaptiveBackground)
 }
+

@@ -55,3 +55,4 @@ struct WalkSetupHeader: View {
     WalkSetupHeader(onBack: {})
         .background(MasukiColors.adaptiveBackground)
 }
+

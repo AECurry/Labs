@@ -139,50 +139,6 @@ struct AnimatedImageLibrary {
             defaultMinScale: 0.95,
             defaultMaxScale: 1.16,
             defaultScaleSpeed: 20.0
-        ),
-        
-        AnimatedImageConfig(
-            id: "lotus",
-            name: "Lotus Flower",
-            imageName: "LotusFlower",
-            description: "Peaceful lotus blossom",
-            defaultRotationSpeed: 40.0,
-            defaultMinScale: 0.97,
-            defaultMaxScale: 1.03,
-            defaultScaleSpeed: 8.0
-        ),
-        
-        AnimatedImageConfig(
-            id: "bamboo",
-            name: "Bamboo Circle",
-            imageName: "BambooCircle",
-            description: "Zen bamboo arrangement",
-            defaultRotationSpeed: 25.0,
-            defaultMinScale: 0.96,
-            defaultMaxScale: 1.04,
-            defaultScaleSpeed: 3.5
-        ),
-        
-        AnimatedImageConfig(
-            id: "cherry",
-            name: "Cherry Blossom",
-            imageName: "CherryBlossom",
-            description: "Delicate sakura petals",
-            defaultRotationSpeed: 35.0,
-            defaultMinScale: 0.98,
-            defaultMaxScale: 1.02,
-            defaultScaleSpeed: 5.0
-        ),
-        
-        AnimatedImageConfig(
-            id: "wave",
-            name: "Great Wave",
-            imageName: "GreatWave",
-            description: "Hokusai-inspired wave",
-            defaultRotationSpeed: 15.0,
-            defaultMinScale: 0.93,
-            defaultMaxScale: 1.07,
-            defaultScaleSpeed: 2.5
         )
     ]
     
@@ -203,3 +159,4 @@ struct AnimatedImageLibrary {
         availableImages.forEach { $0.resetToDefaults() }
     }
 }
+

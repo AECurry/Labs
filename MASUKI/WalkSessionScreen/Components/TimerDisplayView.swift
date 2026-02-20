@@ -46,3 +46,4 @@ struct TimerDisplayView: View {
     }
     .background(MasukiColors.adaptiveBackground)
 }
+

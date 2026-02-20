@@ -92,3 +92,4 @@ final class SettingsManager {
         notificationsEnabled = true
     }
 }
+

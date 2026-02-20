@@ -1,13 +1,13 @@
 //
 //  DurationOption.swift
-//  MASUKI
+//  isoWalk
 //
-//  Created by AnnElaine on 1/2/26.
+//  Created by AnnElaine on 2/17/26.
 //
 
 import Foundation
 
-enum DurationOption: String, CaseIterable, Identifiable, Codable {
+enum DurationOptions: String, CaseIterable, Identifiable, Codable {
     case fifteen = "15 min"
     case twentyOne = "21 min"
     case twentySeven = "27 min"
@@ -41,5 +41,6 @@ enum DurationOption: String, CaseIterable, Identifiable, Codable {
     }
     
     // 21 min is recommended for post-meal walking
-    static let recommended: DurationOption = .twentyOne
+    static let recommended: DurationOptions = .twentyOne
 }
+

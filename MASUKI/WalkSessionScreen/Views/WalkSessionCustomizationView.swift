@@ -216,3 +216,4 @@ struct WalkSessionCustomizationView: View {
 #Preview {
     WalkSessionCustomizationView()
 }
+
