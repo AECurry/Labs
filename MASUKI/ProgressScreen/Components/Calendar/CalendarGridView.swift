@@ -83,3 +83,4 @@ struct CalendarGridView: View {
         .background(MasukiColors.adaptiveBackground)
         .padding()
 }
+

@@ -107,3 +107,4 @@ class BadgeViewModel {
         loadBadges()
     }
 }
+

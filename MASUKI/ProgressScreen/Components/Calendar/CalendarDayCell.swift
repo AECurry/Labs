@@ -124,3 +124,4 @@ struct CalendarDayCell: View {
     .padding()
     .background(MasukiColors.adaptiveBackground)
 }
+

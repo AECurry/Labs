@@ -17,29 +17,25 @@ struct ImageAreaView: View {
         Image(theme.mainImageName)
             .resizable()
             .scaledToFit()
-            .frame(width: 350, height: 350)
+            .frame(width: AnimatedImageSize.extraLarge.dimension,
+                   height: AnimatedImageSize.extraLarge.dimension)
             .rotationEffect(.degrees(rotation))
             .scaleEffect(scale)
-            .id(theme.id) // Restarts animation if theme changes
-            .onAppear {
-                applyThemeAnimation()
-            }
+            .id(theme.id)
+            .onAppear { applyThemeAnimation() }
     }
 
     private func applyThemeAnimation() {
         switch theme.animationType {
-
         case .rotation(let speed):
             withAnimation(.linear(duration: speed).repeatForever(autoreverses: false)) {
                 rotation = 360
             }
-
         case .pulse(let min, let max, let speed):
             scale = min
             withAnimation(.easeInOut(duration: speed).repeatForever(autoreverses: true)) {
                 scale = max
             }
-
         case .rotatingPulse(let rotSpeed, let minSc, let maxSc, let pulseSpeed):
             withAnimation(.linear(duration: rotSpeed).repeatForever(autoreverses: false)) {
                 rotation = 360
@@ -48,7 +44,6 @@ struct ImageAreaView: View {
             withAnimation(.easeInOut(duration: pulseSpeed).repeatForever(autoreverses: true)) {
                 scale = maxSc
             }
-
         case .none:
             break
         }
@@ -58,4 +53,3 @@ struct ImageAreaView: View {
 #Preview {
     ImageAreaView(theme: IsoWalkThemes.all[0])
 }
-

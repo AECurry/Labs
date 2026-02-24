@@ -9,16 +9,37 @@ import SwiftUI
 
 struct BottomNavBar: View {
     @Binding var selectedTab: Int
+    var onTabReTap: (() -> Void)? = nil
     
     var body: some View {
         HStack(spacing: 56) {
-            TabBarItem(icon: "figure.walk", title: "Walk", isSelected: selectedTab == 0) {
-                selectedTab = 0
+            // WALK TAB - This is where we check for the "Re-Tap"
+            TabBarItem(
+                icon: "figure.walk",
+                title: "Walk",
+                isSelected: selectedTab == 0
+            ) {
+                if selectedTab == 0 {
+                    // If we are already here, trigger the "Go Home" action
+                    onTabReTap?()
+                } else {
+                    selectedTab = 0
+                }
             }
-            TabBarItem(icon: "trophy.fill", title: "Progress", isSelected: selectedTab == 1) {
+            
+            TabBarItem(
+                icon: "trophy.fill",
+                title: "Progress",
+                isSelected: selectedTab == 1
+            ) {
                 selectedTab = 1
             }
-            TabBarItem(icon: "person.fill", title: "Features", isSelected: selectedTab == 2) {
+            
+            TabBarItem(
+                icon: "person.fill",
+                title: "Features",
+                isSelected: selectedTab == 2
+            ) {
                 selectedTab = 2
             }
         }
@@ -28,6 +49,7 @@ struct BottomNavBar: View {
     }
 }
 
+// TabBarItem remains the same - it's a great "dumb" component!
 struct TabBarItem: View {
     let icon: String
     let title: String
@@ -39,19 +61,14 @@ struct TabBarItem: View {
             VStack(spacing: 8) {
                 ZStack {
                     if isSelected {
-                        // Gradient circle with 3D depth
                         Circle()
                             .fill(isoWalkColors.gradientBlue)
                             .shadow(color: isoWalkColors.deepSpaceBlue.opacity(0.4), radius: 8, x: 0, y: 4)
-                            .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 2)
                             .overlay(
                                 Circle()
                                     .stroke(
                                         LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.3),
-                                                Color.white.opacity(0.0)
-                                            ],
+                                            colors: [Color.white.opacity(0.3), Color.white.opacity(0.0)],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         ),
@@ -69,10 +86,9 @@ struct TabBarItem: View {
                 
                 Text(title)
                     .font(.system(size: 16, weight: isSelected ? .bold : .medium))
-                    .foregroundColor(isoWalkColors.jetBlack) // jetBlack for all tab text
+                    .foregroundColor(isoWalkColors.jetBlack)
             }
         }
         .buttonStyle(.plain)
     }
 }
-

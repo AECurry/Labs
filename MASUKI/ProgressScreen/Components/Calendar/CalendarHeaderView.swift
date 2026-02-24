@@ -72,3 +72,4 @@ struct CalendarHeaderView: View {
     )
     .background(MasukiColors.adaptiveBackground)
 }
+

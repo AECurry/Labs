@@ -72,3 +72,4 @@ final class ProgressRepository: ProgressRepositoryProtocol {
         return UserDefaults.standard.integer(forKey: "badgesEarned")
     }
 }
+

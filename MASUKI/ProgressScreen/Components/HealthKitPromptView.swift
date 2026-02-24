@@ -56,3 +56,4 @@ struct HealthKitPromptView: View {
         .padding(.horizontal, horizontalPadding)
     }
 }
+

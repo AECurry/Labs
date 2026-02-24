@@ -69,3 +69,4 @@ struct TodayBadgesCard: View {
         .padding()
         .background(MasukiColors.adaptiveBackground)
 }
+

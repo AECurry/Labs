@@ -8,6 +8,7 @@
 //  Owns the ViewModel and all popup expanded states.
 //  Modals rendered in root ZStack — guaranteed to float above everything.
 //  Only one popup can be open at a time.
+//  Navigates to WalkSessionView on Let's Go passing duration, pace, and music.
 
 import SwiftUI
 
@@ -17,87 +18,102 @@ struct WalkSetUpView: View {
     @State private var paceExpanded: Bool = false
     @State private var durationExpanded: Bool = false
     @State private var musicExpanded: Bool = false
+    @State private var navigateToSession: Bool = false
     @Environment(\.dismiss) private var dismiss
     @AppStorage(IsoWalkThemes.selectedThemeKey) private var selectedThemeId: String = IsoWalkThemes.defaultThemeId
     private var theme: IsoWalkTheme { IsoWalkThemes.current(selectedId: selectedThemeId) }
 
-    let onStartSession: (DurationOptions, MusicOptions) -> Void
     let onDismiss: () -> Void
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            themeBackground
+        NavigationStack {
+            ZStack(alignment: .bottom) {
+                themeBackground
 
-            // 1. MAIN CONTENT — static, never moves
-            VStack(spacing: 0) {
-                WalkSetUpHeader(theme: theme, onBack: { onDismiss() })
-                    .padding(.bottom, 32)
+                // 1. MAIN CONTENT — static, never moves
+                VStack(spacing: 0) {
+                    WalkSetUpHeader(theme: theme, onBack: { onDismiss() })
+                        .padding(.bottom, 0)
 
-                VStack(spacing: 12) {
-                    PacePopUp(
+                    VStack(spacing: 12) {
+                        PacePopUp(
+                            selectedPace: $viewModel.selectedPace,
+                            isExpanded: $paceExpanded
+                        )
+                        DurationPopUp(
+                            selectedDuration: $viewModel.selectedDuration,
+                            isExpanded: $durationExpanded
+                        )
+                        MusicPopUp(
+                            selectedMusic: $viewModel.selectedMusic,
+                            isExpanded: $musicExpanded
+                        )
+                    }
+                    .padding(.horizontal, 24)
+
+                    Spacer()
+
+                    LetsGoButton(
+                        isEnabled: viewModel.isReadyToStart,
+                        action: {
+                            viewModel.startWalkingSession()
+                            navigateToSession = true
+                        }
+                    )
+                    .padding(.bottom, 124)
+                }
+
+                // 2. POPUP MODALS — live in root ZStack, float above everything
+                if paceExpanded {
+                    PacePopupModal(
                         selectedPace: $viewModel.selectedPace,
                         isExpanded: $paceExpanded
                     )
-                    DurationPopUp(
+                    .ignoresSafeArea()
+                    .zIndex(10)
+                }
+
+                if durationExpanded {
+                    DurationPopupModal(
                         selectedDuration: $viewModel.selectedDuration,
                         isExpanded: $durationExpanded
                     )
-                    MusicPopUp(
+                    .ignoresSafeArea()
+                    .zIndex(10)
+                }
+
+                if musicExpanded {
+                    MusicPopupModal(
                         selectedMusic: $viewModel.selectedMusic,
                         isExpanded: $musicExpanded
                     )
+                    .ignoresSafeArea()
+                    .zIndex(10)
                 }
-                .padding(.horizontal, 24)
 
-                Spacer()
-
-                LetsGoButton(
-                    isEnabled: viewModel.isReadyToStart,
-                    action: {
-                        viewModel.startWalkingSession()
-                        onStartSession(viewModel.selectedDuration, viewModel.selectedMusic)
-                    }
-                )
-                .padding(.bottom, 124)
-            }
-
-            // 2. POPUP MODALS — live in root ZStack, float above everything
-            if paceExpanded {
-                PacePopupModal(
-                    selectedPace: $viewModel.selectedPace,
-                    isExpanded: $paceExpanded
-                )
-                .ignoresSafeArea()
-                .zIndex(10)
-            }
-
-            if durationExpanded {
-                DurationPopupModal(
-                    selectedDuration: $viewModel.selectedDuration,
-                    isExpanded: $durationExpanded
-                )
-                .ignoresSafeArea()
-                .zIndex(10)
-            }
-
-            if musicExpanded {
-                MusicPopupModal(
-                    selectedMusic: $viewModel.selectedMusic,
-                    isExpanded: $musicExpanded
-                )
-                .ignoresSafeArea()
-                .zIndex(10)
-            }
-
-            // 3. NAV BAR
-            BottomNavBar(selectedTab: $selectedTab)
+                // 3. NAV BAR
+                BottomNavBar(selectedTab: $selectedTab, onTabReTap: {
+                    onDismiss() // This takes the user back to GetWalkingView (Home)
+                })
                 .padding(.bottom, 0)
                 .zIndex(0)
+            }
+            // Ensure only one popup open at a time
+            .onChange(of: paceExpanded) { if paceExpanded { durationExpanded = false; musicExpanded = false } }
+            .onChange(of: durationExpanded) { if durationExpanded { paceExpanded = false; musicExpanded = false } }
+            .onChange(of: musicExpanded) { if musicExpanded { paceExpanded = false; durationExpanded = false } }
+            // Navigate to WalkSessionView
+            .navigationDestination(isPresented: $navigateToSession) {
+                WalkSessionView(
+                    selectedTab: $selectedTab,
+                    duration: viewModel.selectedDuration,
+                    pace: viewModel.selectedPace,
+                    music: viewModel.selectedMusic,
+                    onDismissAll: { onDismiss() }
+                )
+            }
+            .navigationBarHidden(true)
         }
-        // Ensure only one popup open at a time
-        .onChange(of: paceExpanded) { if paceExpanded { durationExpanded = false; musicExpanded = false } }
-        .onChange(of: durationExpanded) { if durationExpanded { paceExpanded = false; musicExpanded = false } }
-        .onChange(of: musicExpanded) { if musicExpanded { paceExpanded = false; durationExpanded = false } }
     }
 
     @ViewBuilder
@@ -114,8 +130,5 @@ struct WalkSetUpView: View {
 }
 
 #Preview {
-    WalkSetUpView(
-        onStartSession: { _, _ in print("Start") },
-        onDismiss: { print("Dismiss") }
-    )
+    WalkSetUpView(onDismiss: { print("Dismiss") })
 }

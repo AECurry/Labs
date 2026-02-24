@@ -27,6 +27,7 @@ final class WalkSetUpViewModel {
     func startWalkingSession() {
         UserDefaults.standard.set(selectedDuration.rawValue, forKey: "lastDuration")
         UserDefaults.standard.set(selectedPace.rawValue, forKey: "lastPace")
+        UserDefaults.standard.set(selectedMusic.rawValue, forKey: "lastMusic")
         print("Starting walk: \(selectedDuration.minutes) min, \(selectedPace.displayName)")
     }
 
@@ -39,6 +40,9 @@ final class WalkSetUpViewModel {
            let option = PaceOptions(rawValue: raw) {
             selectedPace = option
         }
+        if let raw = UserDefaults.standard.string(forKey: "lastMusic"),
+           let option = MusicOptions(rawValue: raw) {
+            selectedMusic = option
+        }
     }
 }
-

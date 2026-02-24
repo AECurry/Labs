@@ -99,3 +99,4 @@ struct ProgressCounter: View {
     }
     .background(MasukiColors.adaptiveBackground)
 }
+

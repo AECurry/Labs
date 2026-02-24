@@ -15,6 +15,7 @@ struct ThemeHeaderPreview: View {
 
     // MARK: - Input
     let theme: IsoWalkTheme
+    let frameSize: CGFloat // You already have this!
 
     // MARK: - Private Animation State
     @State private var rotation: Double = 0
@@ -22,47 +23,50 @@ struct ThemeHeaderPreview: View {
 
     // MARK: - Body
     var body: some View {
-        Image(theme.mainImageName)
-            .resizable()
-            .scaledToFit()
-            .frame(width: 220, height: 220)
-            .clipShape(RoundedRectangle(cornerRadius: 32))
-            .overlay(
-                RoundedRectangle(cornerRadius: 32)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [Color.black.opacity(0.8), Color.black.opacity(0.4)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 3
-                    )
-            )
-            .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
-            .rotationEffect(.degrees(rotation))
-            .scaleEffect(scale)
-            .id(theme.id) // Forces SwiftUI to rebuild + restart animation on theme change
-            .onAppear { startAnimation() }
+        // Wrap in a ZStack to ensure the 'box' stays the same size
+        // even when the image inside pulses or rotates.
+        ZStack {
+            Image(theme.mainImageName)
+                .resizable()
+                .scaledToFit()
+                // Use the variable here instead of 220
+                .frame(width: frameSize, height: frameSize)
+                .rotationEffect(.degrees(rotation))
+                .scaleEffect(scale)
+        }
+        // These styles now wrap the dynamic size perfectly
+        .clipShape(RoundedRectangle(cornerRadius: frameSize / 7)) // Responsive corner radius
+        .overlay(
+            RoundedRectangle(cornerRadius: frameSize / 7)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [Color.black.opacity(0.8), Color.black.opacity(0.4)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 3
+                )
+        )
+        .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
+        .id(theme.id)
+        .onAppear { startAnimation() }
     }
 
-    // MARK: - Animation Logic
+    // MARK: - Animation Logic (No changes needed here)
     private func startAnimation() {
         rotation = 0
         scale = 1.0
 
         switch theme.animationType {
-
         case .rotation(let speed):
             withAnimation(.linear(duration: speed).repeatForever(autoreverses: false)) {
                 rotation = 360
             }
-
         case .pulse(let minSc, let maxSc, let speed):
             scale = minSc
             withAnimation(.easeInOut(duration: speed).repeatForever(autoreverses: true)) {
                 scale = maxSc
             }
-
         case .rotatingPulse(let rotSpeed, let minSc, let maxSc, let pulseSpeed):
             withAnimation(.linear(duration: rotSpeed).repeatForever(autoreverses: false)) {
                 rotation = 360
@@ -71,14 +75,15 @@ struct ThemeHeaderPreview: View {
             withAnimation(.easeInOut(duration: pulseSpeed).repeatForever(autoreverses: true)) {
                 scale = maxSc
             }
-
         case .none:
             break
         }
     }
 }
 
+// FIXED PREVIEW
 #Preview {
-    ThemeHeaderPreview(theme: IsoWalkThemes.all[0])
+    // You MUST pass frameSize here or it won't compile
+    ThemeHeaderPreview(theme: IsoWalkThemes.all[0], frameSize: 220)
         .padding()
 }

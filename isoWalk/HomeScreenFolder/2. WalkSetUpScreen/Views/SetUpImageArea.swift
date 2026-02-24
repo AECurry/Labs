@@ -5,34 +5,31 @@
 //  Created by AnnElaine on 2/17/26.
 //
 //  COMPONENT — dumb child.
-//  Displays the animated theme image at the smaller size used on the setup screen.
-//  Separate from ImageAreaView (GetWalkingScreen) — same animation, different size.
+//  Displays the animated theme image.
+//  Size comes from AnimatedImageSize defined in AnimatedImageConfig.swift.
 //
 
 import SwiftUI
 
 struct SetUpImageArea: View {
 
-    // MARK: - Input
     let theme: IsoWalkTheme
+    var size: AnimatedImageSize = .medium
 
-    // MARK: - Private Animation State
     @State private var rotation: Double = 0
     @State private var scale: CGFloat = 1.0
 
-    // MARK: - Body
     var body: some View {
         Image(theme.mainImageName)
             .resizable()
             .scaledToFit()
-            .frame(width: 180, height: 180)
+            .frame(width: size.dimension, height: size.dimension)
             .rotationEffect(.degrees(rotation))
             .scaleEffect(scale)
             .id(theme.id)
             .onAppear { applyThemeAnimation() }
     }
 
-    // MARK: - Animation Logic
     private func applyThemeAnimation() {
         switch theme.animationType {
         case .rotation(let speed):
@@ -63,7 +60,10 @@ struct SetUpImageArea: View {
         Image("GoldenTextureBackground")
             .resizable()
             .ignoresSafeArea()
-        SetUpImageArea(theme: IsoWalkThemes.all[0])
+        VStack(spacing: 40) {
+            SetUpImageArea(theme: IsoWalkThemes.all[0], size: .extraLarge)
+            SetUpImageArea(theme: IsoWalkThemes.all[0], size: .medium)
+        }
     }
 }
 

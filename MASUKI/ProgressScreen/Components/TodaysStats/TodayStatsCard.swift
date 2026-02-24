@@ -230,3 +230,4 @@ private struct StatColumn: View {
     .padding()
     .background(MasukiColors.adaptiveBackground)
 }
+

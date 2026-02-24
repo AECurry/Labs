@@ -95,3 +95,4 @@ struct StreakColumn: View {
     .padding()
     .background(MasukiColors.adaptiveBackground)
 }
+

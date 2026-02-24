@@ -179,3 +179,4 @@ private struct NewBadgesUnlockedCard: View {
     }
     .background(MasukiColors.adaptiveBackground)
 }
+

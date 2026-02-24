@@ -12,3 +12,4 @@ struct DailyDistance: Identifiable {
     let date: Date
     let distance: Double
 }
+

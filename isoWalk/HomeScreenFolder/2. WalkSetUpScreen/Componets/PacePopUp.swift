@@ -89,7 +89,7 @@ struct PacePopupModal: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     HStack {
                                         Text(option.displayName)
-                                            .font(.custom("Inter-Medium", size: 16))
+                                            .font(.custom("Inter-Bold", size: 24))
                                             .foregroundColor(selectedPace == option
                                                 ? isoWalkColors.deepSpaceBlue
                                                 : .white)
@@ -100,7 +100,7 @@ struct PacePopupModal: View {
                                         }
                                     }
                                     Text(option.description)
-                                        .font(.custom("Inter-Regular", size: 12))
+                                        .font(.custom("Inter-Regular", size: 16))
                                         .foregroundColor(.white.opacity(0.7))
                                 }
                                 .padding(.horizontal, 20)

@@ -22,3 +22,4 @@ struct AchievementBadge: Identifiable {
         MasukiColors.mediumJungle
     }
 }
+

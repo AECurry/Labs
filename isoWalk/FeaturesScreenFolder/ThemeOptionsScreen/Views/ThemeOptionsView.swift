@@ -19,8 +19,12 @@ struct ThemeOptionsView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
-                ThemeHeaderPreview(theme: viewModel.selectedTheme)
-                    .padding(.top, 24)
+                // Add the frameSize: 220 here
+                ThemeHeaderPreview(
+                    theme: viewModel.selectedTheme,
+                    frameSize: 220
+                )
+                .padding(.top, 24)
 
                 ThemeGridSection(
                     themes: viewModel.themes,
@@ -35,7 +39,7 @@ struct ThemeOptionsView: View {
             }
         }
         .background(isoWalkColors.adaptiveBackground)
-        .navigationTitle("") // Title handled by tab bar
+        .navigationTitle("")
     }
 }
 

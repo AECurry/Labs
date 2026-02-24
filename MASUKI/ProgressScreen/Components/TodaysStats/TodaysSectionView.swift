@@ -106,3 +106,4 @@ struct TodaysSectionView: View {
     )
     .background(MasukiColors.adaptiveBackground)
 }
+

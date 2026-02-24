@@ -21,6 +21,10 @@ struct isoWalkColors {
 
     // Background colors
     static let parchment = Color(hex: "F5F0E8")
+    
+    // Stop, Play, Pause colors
+    static let brandy = Color(hex: "912216")
+    static let forestGreen = Color(hex: "238732")
 
     // MARK: - Gradient (top: balticBlue → bottom: deepSpaceBlue)
     static let gradientBlue = LinearGradient(

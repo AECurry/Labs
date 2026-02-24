@@ -97,3 +97,4 @@ struct ProgressBadgeSection: View {
         .padding(.vertical, 16)
     }
 }
+

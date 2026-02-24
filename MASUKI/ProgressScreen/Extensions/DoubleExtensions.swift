@@ -26,3 +26,4 @@ extension Double {
         return useMetric ? "km" : "mi"
     }
 }
+

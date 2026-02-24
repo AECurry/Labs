@@ -33,3 +33,4 @@ struct TodaySession: Identifiable, Codable, Equatable {  // ← ADDED Codable, E
     // SwiftUI auto-synthesizes this, but we need to make sure all properties are Codable
     // UUID, Date, TimeInterval, Double are all Codable by default
 }
+
