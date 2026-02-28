@@ -6,31 +6,39 @@
 //
 
 import SwiftUI
-import Combine
+import Observation
 
+@Observable 
 @MainActor
-final class UserListViewModel: ObservableObject {
-    // MARK: - Published Properties
-    @Published var users: [User]
-    @Published var isLoading = false
-    @Published var cellViewModels: [String: UserCellViewModel] = [:]
+final class UserListViewModel {
     
-    // MARK: - Dependencies
-    private let imageService: ImageServiceProtocol
-    
-    init(users: [User], imageService: ImageServiceProtocol = ImageCacheService.shared) {
+    // No more @Published!
+    var users: [User]
+    var isLoading = false
+    var cellViewModels: [String: UserCellViewModel] = [:]
+
+    @ObservationIgnored private let imageService: ImageServiceProtocol
+    let settings: Settings
+
+    init(users: [User],
+         settings: Settings,
+         imageService: ImageServiceProtocol? = nil) {
         self.users = users
-        self.imageService = imageService
+        self.settings = settings
+        self.imageService = imageService ?? ImageCacheService.shared
+        
+        setupViewModels()
+    }
+    
+    private func setupViewModels() {
+        for user in users {
+            let id = user.id.uuidString
+            cellViewModels[id] = UserCellViewModel(user: user, imageService: imageService)
+        }
     }
     
     func cellViewModel(for user: User) -> UserCellViewModel {
-        if let existing = cellViewModels[user.id.uuidString] {
-            return existing
-        }
-        
-        let newVM = UserCellViewModel(user: user, imageService: imageService)
-        cellViewModels[user.id.uuidString] = newVM
-        return newVM
+        return cellViewModels[user.id.uuidString] ?? UserCellViewModel(user: user, imageService: imageService)
     }
     
     func loadImagesForVisibleCells() async {
@@ -46,3 +54,4 @@ final class UserListViewModel: ObservableObject {
         }
     }
 }
+

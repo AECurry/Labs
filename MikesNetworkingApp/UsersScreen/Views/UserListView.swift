@@ -8,34 +8,26 @@
 import SwiftUI
 
 struct UserListView: View {
-    @StateObject var viewModel: UserListViewModel
-    @Binding var navigationPath: NavigationPath
     
+   
+    @State var viewModel: UserListViewModel
+    @Binding var navigationPath: NavigationPath
+
     var body: some View {
         List(viewModel.users) { user in
-            UserCellView(viewModel: viewModel.cellViewModel(for: user))
+            UserCellView(
+                viewModel: viewModel.cellViewModel(for: user),
+                settings: viewModel.settings
+            )
+            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+            .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
         .background(backgroundGradient)
         .navigationTitle("Users (\(viewModel.users.count))")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Done") {
-                    navigationPath.removeLast()
-                }
-            }
-        }
-        .task {
-            await viewModel.loadImagesForVisibleCells()
-        }
-        .overlay {
-            if viewModel.isLoading {
-                LoadingView()
-            }
-        }
     }
-    
+
     private var backgroundGradient: some View {
         LinearGradient(
             colors: [.blue.opacity(0.05), .purple.opacity(0.05)],
@@ -45,3 +37,4 @@ struct UserListView: View {
         .ignoresSafeArea()
     }
 }
+

@@ -46,6 +46,11 @@
 			path = UsersScreen;
 			sourceTree = "<group>";
 		};
+		4981F1EA2F4E16DA00BC1700 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +73,7 @@
 				4981F1A72F4DF67200BC1700 /* Services */,
 				4981F1A82F4DF67C00BC1700 /* Protocols */,
 				4981F1A92F4DF68A00BC1700 /* Extensions */,
+				4981F1EA2F4E16DA00BC1700 /* Shared */,
 				4981F1962F4DF48900BC1700 /* MikesNetworkingApp */,
 				4981F1952F4DF48900BC1700 /* Products */,
 			);
@@ -103,6 +109,7 @@
 				4981F1A92F4DF68A00BC1700 /* Extensions */,
 				4981F1CC2F4DFBBA00BC1700 /* SettingsScreen */,
 				4981F1CD2F4DFBC800BC1700 /* UsersScreen */,
+				4981F1EA2F4E16DA00BC1700 /* Shared */,
 			);
 			name = MikesNetworkingApp;
 			packageProductDependencies = (

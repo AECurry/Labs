@@ -32,3 +32,4 @@ struct WalkSessionImageArea: View {
         WalkSessionImageArea(theme: IsoWalkThemes.all[0])
     }
 }
+

@@ -19,14 +19,16 @@ struct isoWalkMainView: View {
                 GetWalkingView()
                     .tag(0)
                 
-                Text("Progress Screen").tag(1)
-                Text("Features Screen").tag(2)
+                ProgressScreenView()
+                    .tag(1)
+                
+                Text("Features Screen")
+                    .tag(2)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .ignoresSafeArea()
             
             if showNavBar {
-                
                 BottomNavBar(selectedTab: $selectedTab)
                     .padding(.bottom, 0)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -39,4 +41,3 @@ struct isoWalkMainView: View {
     isoWalkMainView()
         .environment(SessionManager())
 }
-

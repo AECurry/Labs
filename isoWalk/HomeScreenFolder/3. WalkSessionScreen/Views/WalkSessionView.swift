@@ -112,3 +112,4 @@ struct WalkSessionView: View {
         music: .placeholder
     )
 }
+

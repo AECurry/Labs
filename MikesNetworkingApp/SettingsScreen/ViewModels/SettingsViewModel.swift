@@ -6,37 +6,74 @@
 //
 
 import SwiftUI
-import Combine
+import Observation
 
+@Observable
 @MainActor
-final class SettingsViewModel: ObservableObject {
-    // MARK: - Published Properties
-    @Published var settings = Settings()
-    @Published var users: [User] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+final class SettingsViewModel {
+    var settings = Settings()
+    var users: [User] = []
+    var isLoading = false
+    var errorMessage: String?
     
-    // MARK: - Dependencies
+    @ObservationIgnored
     private let apiService: APIServiceProtocol
+    @ObservationIgnored
     private let storageService: StorageServiceProtocol
     
-    init(apiService: APIServiceProtocol = APIService(),
-         storageService: StorageServiceProtocol = StorageService()) {
-        self.apiService = apiService
-        self.storageService = storageService
+    init(apiService: APIServiceProtocol? = nil, storageService: StorageServiceProtocol? = nil) {
+        self.apiService = apiService ?? APIService()
+        self.storageService = storageService ?? StorageService()
         loadSettings()
     }
-    
+
     func fetchUsers() async {
         isLoading = true
-        defer { isLoading = false }
+        errorMessage = nil
+        self.users = []
         
-        do {
-            users = try await apiService.fetchUsers(settings: settings)
-            saveSettings()
-        } catch {
-            errorMessage = error.localizedDescription
+       
+        let fetchedUsers: [User]? = await withTaskGroup(of: [User]?.self) { group -> [User]? in
+            
+            // Task 1: real API call
+            group.addTask {
+                return try? await self.apiService.fetchUsers(settings: self.settings)
+            }
+            
+            // Task 2: 5-second timeout sentinel
+            group.addTask {
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
+                return nil // signals timeout
+            }
+            
+            // Take whichever finishes first
+            for await result in group {
+                group.cancelAll() // cancel the other task
+                if let users = result {
+                    return users // real API won
+                } else {
+                    return nil  // timeout won (or real API returned nil)
+                }
+            }
+            return nil
         }
+        
+        if let users = fetchedUsers, !users.isEmpty {
+            print("Real API succeeded with \(users.count) users")
+            self.users = users
+        } else {
+            // Real API failed or timed out — use mock
+            print("Real API unavailable. Switching to MockAPIService...")
+            do {
+                let mockUsers = try await MockAPIService().fetchUsers(settings: self.settings)
+                print("Mock API succeeded with \(mockUsers.count) users")
+                self.users = mockUsers
+            } catch {
+                self.errorMessage = "Both API and Mock failed: \(error.localizedDescription)"
+            }
+        }
+        
+        self.isLoading = false
     }
     
     func saveSettings() {

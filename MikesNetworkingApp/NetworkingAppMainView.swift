@@ -7,25 +7,40 @@
 
 import SwiftUI
 
+enum AppRoute: Hashable {
+    case userList
+}
+
 struct NetworkingAppMainView: View {
     @State private var navigationPath = NavigationPath()
-    @StateObject private var settingsVM = SettingsViewModel()
-    
+    @State private var settingsVM = SettingsViewModel()
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             SettingsView(
                 viewModel: settingsVM,
                 navigationPath: $navigationPath
             )
-            .navigationDestination(for: [User].self) { users in
-                if !users.isEmpty {
+           
+            .navigationDestination(for: AppRoute.self) { route in
+                switch route {
+                case .userList:
                     UserListView(
-                        viewModel: UserListViewModel(users: users),
+                        viewModel: UserListViewModel(
+                            users: settingsVM.users,
+                            settings: settingsVM.settings
+                        ),
                         navigationPath: $navigationPath
                     )
                 }
             }
         }
-        .tint(.blue)
+       
+        .onChange(of: settingsVM.users.count) { _, newCount in
+            if newCount > 0 && navigationPath.count == 0 {
+                navigationPath.append(AppRoute.userList)
+            }
+        }
     }
 }
+

@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @ObservedObject var viewModel: SettingsViewModel
+  
+    @Bindable var viewModel: SettingsViewModel
+    
     @Binding var navigationPath: NavigationPath
     
     let options: [(icon: String, title: String, keyPath: WritableKeyPath<Settings, Bool>)] = [
@@ -17,7 +19,7 @@ struct SettingsView: View {
         ("envelope.fill", "Email", \.showEmail),
         ("person.circle.fill", "Login", \.showLogin),
         ("calendar.badge.plus", "Registered", \.showRegistered),
-        ("cake.fill", "Birthday", \.showDob),
+        ("birthday.cake.fill", "Birthday", \.showDob),
         ("phone.fill", "Phone", \.showPhone),
         ("iphone", "Cell", \.showCell),
         ("person.text.rectangle.fill", "ID", \.showID),
@@ -35,20 +37,28 @@ struct SettingsView: View {
             .padding()
         }
         .background(backgroundGradient)
-        .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
         .overlay {
             if viewModel.isLoading {
-                LoadingView()
+                ProgressView()
+                    .padding()
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(10)
             }
         }
-        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+        .alert("Notice", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { isPresented in
+                if !isPresented { viewModel.errorMessage = nil }
+            }
+        )) {
             Button("OK") { viewModel.errorMessage = nil }
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
     }
     
+    // MARK: - Subviews
     private var headerSection: some View {
         VStack(spacing: 12) {
             Image(systemName: "antenna.radiowaves.left.and.right")
@@ -138,7 +148,7 @@ struct SettingsView: View {
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.gray.opacity(0.1))
+                    .background(Color.gray.opacity(0.10))
                     .cornerRadius(8)
                 }
             }
@@ -152,27 +162,21 @@ struct SettingsView: View {
         Button {
             Task {
                 await viewModel.fetchUsers()
-                if !viewModel.users.isEmpty {
-                    navigationPath.append(viewModel.users)
-                }
             }
         } label: {
-            HStack {
-                Image(systemName: "arrow.down.doc.fill")
-                Text("Fetch Users")
-                    .fontWeight(.semibold)
-            }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(
-                LinearGradient(
-                    colors: viewModel.isLoading ? [.gray] : [.blue, .purple],
-                    startPoint: .leading,
-                    endPoint: .trailing
+            Text("Fetch Users")
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    LinearGradient(
+                        colors: viewModel.isLoading ? [.gray] : [.blue, .purple],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
                 )
-            )
-            .foregroundColor(.white)
-            .cornerRadius(12)
+                .foregroundColor(.white)
+                .cornerRadius(12)
         }
         .disabled(viewModel.isLoading)
         .padding(.top, 12)

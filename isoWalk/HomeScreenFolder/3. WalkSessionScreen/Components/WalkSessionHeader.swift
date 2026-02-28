@@ -49,3 +49,4 @@ struct WalkSessionHeader: View {
         WalkSessionHeader(onBack: {})
     }
 }
+
