@@ -7,10 +7,12 @@
 //  COMPONENT — dumb child.
 //  Trigger button + centered floating popup.
 //  Receives selectedMusic and isExpanded bindings from WalkSetUpView.
+//
 //  PLACEHOLDER: Music selection coming soon. Button is disabled.
 //  When ready: remove .allowsHitTesting(false) from the trigger button,
 //  delete the placeholder body in MusicPopupModal, and add ForEach
 //  over MusicOptions.allCases exactly like Pace and Duration.
+//
 
 import SwiftUI
 
@@ -73,8 +75,9 @@ struct MusicPopupModal: View {
                 }
 
             VStack(spacing: 0) {
+                // FIX: Changed from Inter-SemiBold to Inter-Bold to match all other modals
                 Text("Select Music")
-                    .font(.custom("Inter-SemiBold", size: 18))
+                    .font(.custom("Inter-Bold", size: 18))
                     .foregroundColor(.white)
                     .padding(.vertical, 16)
 
@@ -109,7 +112,7 @@ struct MusicPopupModal: View {
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(isoWalkColors.balticBlue)
-                    .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 8)
+                    .shadow(color: .black.opacity(0.4), radius: 20, x: 8, y: 8)
             )
             .padding(.horizontal, 32)
             .transition(.opacity.combined(with: .scale(scale: 0.95)))

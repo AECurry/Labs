@@ -12,46 +12,46 @@ import UIKit
 final class ImageCacheService: ImageServiceProtocol {
     static let shared = ImageCacheService()
     
-    // MARK: - Cache Configuration
+    
     private let memoryCache = NSCache<NSString, NSData>()
     private let fileManager = FileManager.default
     private let cacheQueue = DispatchQueue(label: "image.cache.queue", attributes: .concurrent)
     
     private init() {
-        memoryCache.countLimit = 100 // Max 100 images in memory
-        memoryCache.totalCostLimit = 50 * 1024 * 1024 // 50MB limit
+        memoryCache.countLimit = 100
+        memoryCache.totalCostLimit = 50 * 1024 * 1024
         
-        // Create disk cache directory if needed
+        
         createCacheDirectoryIfNeeded()
     }
     
-    // MARK: - Public Methods
+    
     func loadImage(from urlString: String) async -> Data? {
-        // Check memory cache first (fastest)
+       
         if let cachedData = getFromMemoryCache(for: urlString) {
             return cachedData
         }
         
-        // Check disk cache (slower but persists between sessions)
+        
         if let diskData = try? loadFromDisk(for: urlString) {
-            // Store back in memory cache for next time
+            
             saveToMemoryCache(diskData, for: urlString)
             return diskData
         }
         
-        // Download from network
+        
         guard let url = URL(string: urlString) else { return nil }
         
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             
-            // Cache the downloaded image
+            
             saveToMemoryCache(data, for: urlString)
             try? saveToDisk(data, for: urlString)
             
             return data
         } catch {
-            print("❌ Failed to download image: \(error.localizedDescription)")
+            print("Failed to download image: \(error.localizedDescription)")
             return nil
         }
     }
@@ -61,7 +61,7 @@ final class ImageCacheService: ImageServiceProtocol {
         try? saveToDisk(data, for: key)
     }
     
-    // MARK: - Memory Cache
+   
     private func getFromMemoryCache(for key: String) -> Data? {
         cacheQueue.sync {
             memoryCache.object(forKey: key as NSString) as? Data
@@ -74,7 +74,7 @@ final class ImageCacheService: ImageServiceProtocol {
         }
     }
     
-    // MARK: - Disk Cache
+    
     private func getDiskCacheURL(for key: String) -> URL {
         let cacheDir = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         let filename = key
@@ -104,7 +104,7 @@ final class ImageCacheService: ImageServiceProtocol {
         return try Data(contentsOf: url)
     }
     
-    // MARK: - Cache Management
+
     func clearMemoryCache() {
         cacheQueue.async(flags: .barrier) { [weak self] in
             self?.memoryCache.removeAllObjects()

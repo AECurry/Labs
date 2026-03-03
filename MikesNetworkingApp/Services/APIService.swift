@@ -39,7 +39,7 @@ final class APIService: APIServiceProtocol {
             throw NetworkError.invalidURL
         }
         
-        print("🌐 Fetching: \(url.absoluteString)")
+        print("Fetching: \(url.absoluteString)")
         
         do {
             let (data, response) = try await session.data(from: url)

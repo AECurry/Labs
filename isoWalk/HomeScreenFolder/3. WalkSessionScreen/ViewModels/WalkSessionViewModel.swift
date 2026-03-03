@@ -8,6 +8,7 @@
 //  The View is dumb — it only reads from and calls into this ViewModel.
 //
 
+
 import SwiftUI
 import Observation
 import Combine
@@ -30,6 +31,10 @@ final class WalkSessionViewModel {
     private var timerCancellable: AnyCancellable?
     private var amplitudeLink: CADisplayLink?
     private var backgroundTime: Date?
+
+    // Tracks whether the timer was running before an alert paused it,
+    // so resumeAfterAlert() knows whether to restart or stay paused.
+    private var wasRunningBeforeAlert = false
 
     deinit {
         stopTimer()
@@ -90,12 +95,34 @@ final class WalkSessionViewModel {
 
         timerState = .stopped
         isAudioPlaying = false
+        wasRunningBeforeAlert = false
         WalkSessionOptions.clearActive()
         activeSession = nil
     }
 
+    // Called the moment a confirmation alert appears (stop, back, tab tap).
+    // Freezes the timer without changing the visible timerState so the UI
+    // doesn't flicker. Records whether it was running so we can restore it.
+    func pauseForAlert() {
+        wasRunningBeforeAlert = timerState == .running
+        if timerState == .running {
+            stopTimer()
+            isAudioPlaying = false
+        }
+    }
+
+    // Called when the user taps Cancel on a confirmation alert.
+    // Restores the timer exactly as it was before the alert appeared.
+    func resumeAfterAlert() {
+        if wasRunningBeforeAlert {
+            startTimer()
+            isAudioPlaying = true
+        }
+        wasRunningBeforeAlert = false
+    }
+
     func saveSessionState() {
-        guard var session = activeSession else { return }
+        guard timerState != .stopped, var session = activeSession else { return }
         session.pausedAt = timerState == .paused ? remainingTime : nil
         WalkSessionOptions.saveActive(session)
         activeSession = session
@@ -104,15 +131,26 @@ final class WalkSessionViewModel {
     func handleScenePhase(_ phase: ScenePhase) {
         switch phase {
         case .background, .inactive:
-            if timerState == .running { backgroundTime = Date(); stopTimer() }
-        case .active:
-            if let bg = backgroundTime, timerState == .running {
-                let elapsed = Date().timeIntervalSince(bg)
-                remainingTime = max(0, remainingTime - elapsed)
-                backgroundTime = nil
-                if remainingTime <= 0 { completeSession() } else { startTimer() }
+            if timerState == .running {
+                backgroundTime = Date()
+                stopTimer()
+                // timerState stays .running so we know to resume on return
             }
-        @unknown default: break
+        case .active:
+            if let bg = backgroundTime {
+                backgroundTime = nil
+                if timerState == .running {
+                    let elapsed = Date().timeIntervalSince(bg)
+                    remainingTime = max(0, remainingTime - elapsed)
+                    if remainingTime <= 0 {
+                        completeSession()
+                    } else {
+                        startTimer()
+                    }
+                }
+            }
+        @unknown default:
+            break
         }
     }
 
@@ -181,4 +219,3 @@ final class WalkSessionViewModel {
         }
     }
 }
-

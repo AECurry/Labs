@@ -35,7 +35,7 @@ struct User: Identifiable, Codable, Hashable {
         return "\(name.title) \(name.first) \(name.last)"
     }
     
-    // Hashable conformance
+    
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
@@ -45,21 +45,21 @@ struct User: Identifiable, Codable, Hashable {
     }
 }
 
-// MARK: - Name
+
 struct Name: Codable, Hashable {
     let title: String
     let first: String
     let last: String
 }
 
-// MARK: - Picture
+
 struct Picture: Codable, Hashable {
     let large: String
     let medium: String
     let thumbnail: String
 }
 
-// MARK: - Location
+
 struct Location: Codable, Hashable {
     let street: Street?
     let city: String?
@@ -85,13 +85,13 @@ struct Location: Codable, Hashable {
     }
 }
 
-// MARK: - Street
+
 struct Street: Codable, Hashable {
     let number: Int
     let name: String
 }
 
-// MARK: - Postcode (can be Int or String)
+
 enum Postcode: Codable, Hashable {
     case int(Int)
     case string(String)
@@ -115,7 +115,7 @@ enum Postcode: Codable, Hashable {
     }
 }
 
-// MARK: - Login
+
 struct Login: Codable, Hashable {
     let uuid: String?
     let username: String?
@@ -126,13 +126,13 @@ struct Login: Codable, Hashable {
     let sha256: String?
 }
 
-// MARK: - Registered
+
 struct Registered: Codable, Hashable {
     let date: String?
     let age: Int?
 }
 
-// MARK: - Dob
+
 struct Dob: Codable, Hashable {
     let date: String?
     let age: Int?
@@ -149,7 +149,7 @@ struct Dob: Codable, Hashable {
     }
 }
 
-// MARK: - ID
+
 struct UserID: Codable, Hashable {
     let name: String?
     let value: String?

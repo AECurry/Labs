@@ -41,3 +41,4 @@ struct isoWalkMainView: View {
     isoWalkMainView()
         .environment(SessionManager())
 }
+

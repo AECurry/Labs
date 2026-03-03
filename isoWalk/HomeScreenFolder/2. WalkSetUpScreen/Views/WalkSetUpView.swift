@@ -132,3 +132,4 @@ struct WalkSetUpView: View {
 #Preview {
     WalkSetUpView(onDismiss: { print("Dismiss") })
 }
+

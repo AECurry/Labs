@@ -12,17 +12,17 @@ import Observation
 @MainActor
 final class UserCellViewModel: Identifiable {
 
-    // MARK: - Properties (No more @Published!)
+   
     var imageData: Data?
     var isLoadingImage = false
 
-    // MARK: - Public read-only
+   
     let user: User
     var id: String { user.id.uuidString }
     var displayName: String { user.fullName }
 
-    // MARK: - Dependencies
-    @ObservationIgnored // <-- Tells the macro not to track this
+    
+    @ObservationIgnored
     private let imageService: ImageServiceProtocol
 
     init(user: User, imageService: ImageServiceProtocol) {
@@ -30,7 +30,7 @@ final class UserCellViewModel: Identifiable {
         self.imageService = imageService
     }
 
-    // MARK: - Image Loading
+   
     func loadImage() async {
         guard imageData == nil, !isLoadingImage else { return }
         isLoadingImage = true
@@ -38,9 +38,9 @@ final class UserCellViewModel: Identifiable {
         imageData = await imageService.loadImage(from: user.picture.thumbnail)
     }
 
-    // MARK: - Display Rows
+    
     func infoRows(for settings: Settings) -> [(icon: String, label: String, value: String)] {
-        // (Keep your exact same infoRows logic here - it is perfect)
+      
         var rows: [(String, String, String)] = []
 
         if settings.showGender, let gender = user.gender {

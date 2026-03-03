@@ -7,6 +7,7 @@
 //  COMPONENT — dumb child.
 //  Trigger button + centered floating popup.
 //  Receives selectedPace and isExpanded bindings from WalkSetUpView.
+//
 
 import SwiftUI
 
@@ -71,8 +72,9 @@ struct PacePopupModal: View {
 
             // Centered modal card
             VStack(spacing: 0) {
+                // FIX: Changed from Inter-SemiBold to Inter-Bold to match all other modals
                 Text("Select Pace")
-                    .font(.custom("Inter-SemiBold", size: 18))
+                    .font(.custom("Inter-Bold", size: 18))
                     .foregroundColor(.white)
                     .padding(.vertical, 16)
 

@@ -53,3 +53,4 @@ struct ImageAreaView: View {
 #Preview {
     ImageAreaView(theme: IsoWalkThemes.all[0])
 }
+

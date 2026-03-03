@@ -10,7 +10,6 @@
 
 import SwiftUI
 
-// MARK: - Alert Type
 enum SessionAlertType {
     case exitToTab(Int)
     case stopSession
@@ -39,10 +38,10 @@ enum SessionAlertType {
     }
 }
 
-// MARK: - View Modifier
 struct SessionConfirmationAlert: ViewModifier {
     @Binding var alertType: SessionAlertType?
     let onConfirm: (SessionAlertType) -> Void
+    let onCancel: () -> Void       // NEW: fires when user taps Cancel
 
     func body(content: Content) -> some View {
         content
@@ -53,7 +52,10 @@ struct SessionConfirmationAlert: ViewModifier {
                     set: { if !$0 { alertType = nil } }
                 )
             ) {
-                Button("Cancel", role: .cancel) { alertType = nil }
+                Button("Cancel", role: .cancel) {
+                    alertType = nil
+                    onCancel()     // Resume the timer
+                }
                 Button(alertType?.confirmButtonText ?? "Confirm", role: .destructive) {
                     if let type = alertType { onConfirm(type) }
                     alertType = nil
@@ -64,30 +66,16 @@ struct SessionConfirmationAlert: ViewModifier {
     }
 }
 
-// MARK: - View Extension
 extension View {
     func sessionConfirmationAlert(
         alertType: Binding<SessionAlertType?>,
-        onConfirm: @escaping (SessionAlertType) -> Void
+        onConfirm: @escaping (SessionAlertType) -> Void,
+        onCancel: @escaping () -> Void     // NEW parameter
     ) -> some View {
-        self.modifier(SessionConfirmationAlert(alertType: alertType, onConfirm: onConfirm))
+        self.modifier(SessionConfirmationAlert(
+            alertType: alertType,
+            onConfirm: onConfirm,
+            onCancel: onCancel
+        ))
     }
 }
-
-#Preview {
-    struct PreviewWrapper: View {
-        @State private var alertType: SessionAlertType? = nil
-        var body: some View {
-            VStack(spacing: 20) {
-                Button("Show Exit Alert") { alertType = .exitToTab(1) }
-                Button("Show Stop Alert") { alertType = .stopSession }
-            }
-            .padding()
-            .sessionConfirmationAlert(alertType: $alertType) { type in
-                print("Confirmed: \(type)")
-            }
-        }
-    }
-    return PreviewWrapper()
-}
-

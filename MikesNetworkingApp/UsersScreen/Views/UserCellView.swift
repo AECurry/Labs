@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct UserCellView: View {
-    // 1. Remove @ObservedObject. Just use standard let/var!
+    
     var viewModel: UserCellViewModel
     let settings: Settings
 
-    // ... The rest of your UserCellView body and logic remains exactly the same ...
+ 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // MARK: Header row — photo + name
+            
             HStack(spacing: 14) {
                 profileImage
                     .frame(width: 56, height: 56)
@@ -29,7 +29,7 @@ struct UserCellView: View {
                 Spacer()
             }
 
-            // MARK: Info rows for selected fields
+           
             let rows = viewModel.infoRows(for: settings)
             if !rows.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
@@ -38,14 +38,14 @@ struct UserCellView: View {
                     }
                 }
                 .padding(.top, 10)
-                .padding(.leading, 70) // aligns under the name text
+                .padding(.leading, 70)
             }
         }
         .padding(.vertical, 10)
         .task { await viewModel.loadImage() }
     }
 
-    // MARK: - Profile Image
+    
     @ViewBuilder
     private var profileImage: some View {
         if let data = viewModel.imageData, let uiImage = UIImage(data: data) {
@@ -66,7 +66,7 @@ struct UserCellView: View {
     }
 }
 
-// MARK: - Small reusable row
+
 private struct InfoRowView: View {
     let icon: String
     let label: String

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// MARK: - View Extensions
+
 extension View {
     func errorAlert(errorMessage: Binding<String?>) -> some View {
         self.alert("Error", isPresented: .constant(errorMessage.wrappedValue != nil)) {
@@ -20,13 +20,13 @@ extension View {
     }
 }
 
-// MARK: - Color Extensions
+
 extension Color {
     static let primaryBlue = Color.blue
     static let primaryPurple = Color.purple
 }
 
-// MARK: - LinearGradient Extensions
+
 extension LinearGradient {
     static let primaryGradient = LinearGradient(
         colors: [.blue, .purple],
@@ -41,7 +41,7 @@ extension LinearGradient {
     )
 }
 
-// MARK: - Date Extensions
+
 extension Date {
     func formattedString() -> String {
         let formatter = DateFormatter()
@@ -51,7 +51,7 @@ extension Date {
     }
 }
 
-// MARK: - String Extensions
+
 extension String {
     func capitalizingFirstLetter() -> String {
         return prefix(1).uppercased() + dropFirst()

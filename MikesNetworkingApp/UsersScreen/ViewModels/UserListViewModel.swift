@@ -12,7 +12,7 @@ import Observation
 @MainActor
 final class UserListViewModel {
     
-    // No more @Published!
+  
     var users: [User]
     var isLoading = false
     var cellViewModels: [String: UserCellViewModel] = [:]

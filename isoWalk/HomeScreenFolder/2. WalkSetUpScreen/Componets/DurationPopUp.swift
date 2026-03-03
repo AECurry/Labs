@@ -151,3 +151,4 @@ struct DurationPopupModal: View {
     .padding()
     .background(isoWalkColors.parchment)
 }
+

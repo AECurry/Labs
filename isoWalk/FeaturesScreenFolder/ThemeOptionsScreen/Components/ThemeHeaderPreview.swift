@@ -87,3 +87,4 @@ struct ThemeHeaderPreview: View {
     ThemeHeaderPreview(theme: IsoWalkThemes.all[0], frameSize: 220)
         .padding()
 }
+

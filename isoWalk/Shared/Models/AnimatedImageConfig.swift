@@ -15,7 +15,7 @@ import SwiftUI
 
 enum AnimatedImageSize {
     case extraLarge  // 335x335 — Get Walking screen
-    case medium      // 216x216 — Walk Set Up screen
+    case medium      // 188x188 — Walk Set Up screen
 
     var dimension: CGFloat {
         switch self {
@@ -156,3 +156,4 @@ struct AnimatedImageLibrary {
         availableImages.forEach { $0.resetToDefaults() }
     }
 }
+

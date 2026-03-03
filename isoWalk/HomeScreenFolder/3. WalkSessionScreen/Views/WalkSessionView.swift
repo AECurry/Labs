@@ -54,10 +54,15 @@ struct WalkSessionView: View {
 
                 Spacer()
 
-                BottomNavBar(selectedTab: $selectedTab, onTabReTap: {
-                    viewModel.stopSession() // Stop the timer/music
-                    onDismissAll?()        // Return all the way to GetWalkingView
-                })
+                BottomNavBar(
+                    selectedTab: $selectedTab,
+                    onTabReTap: {
+                        coordinator.handleStopButtonTap()
+                    },
+                    onTabChange: { tab in
+                        coordinator.handleTabTap(tab)
+                    }
+                )
             }
         }
         .navigationBarHidden(true)
@@ -71,10 +76,18 @@ struct WalkSessionView: View {
         .onChange(of: scenePhase) { _, newPhase in
             viewModel.handleScenePhase(newPhase)
         }
-        .sessionConfirmationAlert(alertType: $coordinator.currentAlert) { alertType in
-            coordinator.handleConfirmation(alertType)
-        }
+        .sessionConfirmationAlert(
+            alertType: $coordinator.currentAlert,
+            onConfirm: { alertType in
+                coordinator.handleConfirmation(alertType)
+            },
+            onCancel: {
+                coordinator.handleCancellation()
+            }
+        )
     }
+
+    // MARK: - Background
 
     @ViewBuilder
     private var themeBackground: some View {
@@ -88,6 +101,8 @@ struct WalkSessionView: View {
         }
     }
 
+    // MARK: - Coordinator Wiring
+
     private func setupCoordinator() {
         coordinator.onNavigateToTab = { tab in
             viewModel.stopSession()
@@ -99,6 +114,12 @@ struct WalkSessionView: View {
         coordinator.onStopSession = {
             viewModel.stopSession()
             dismiss()
+        }
+        coordinator.onPauseForAlert = {
+            viewModel.pauseForAlert()
+        }
+        coordinator.onResumeAfterAlert = {
+            viewModel.resumeAfterAlert()
         }
     }
 }
@@ -112,4 +133,3 @@ struct WalkSessionView: View {
         music: .placeholder
     )
 }
-

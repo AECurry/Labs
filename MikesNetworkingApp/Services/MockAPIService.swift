@@ -9,7 +9,7 @@ import Foundation
 
 final class MockAPIService: APIServiceProtocol {
     func fetchUsers(settings: Settings) async throws -> [User] {
-        // Keeping a small delay for the loading spinner effect
+        
         try? await Task.sleep(nanoseconds: 500_000_000)
         
         return [
@@ -25,7 +25,7 @@ final class MockAPIService: APIServiceProtocol {
                 dob: Dob(date: "1990-04-12T09:15:30Z", age: 35),
                 phone: "(303)-555-0142",
                 cell: "(720)-555-0198",
-                idInfo: UserID(name: "SSN", value: "123-45-6789"), // FIXED: changed 'id' to 'idInfo'
+                idInfo: UserID(name: "SSN", value: "123-45-6789"),
                 nat: "US"
             ),
             // LIAM NGUYEN
@@ -40,7 +40,7 @@ final class MockAPIService: APIServiceProtocol {
                 dob: Dob(date: "1985-09-03T14:22:10Z", age: 40),
                 phone: "(206)-555-0111",
                 cell: "(425)-555-0177",
-                idInfo: UserID(name: "SSN", value: "987-65-4321"), // FIXED: changed 'id' to 'idInfo'
+                idInfo: UserID(name: "SSN", value: "987-65-4321"),
                 nat: "US"
             ),
             // ISABELLA ROSSI
@@ -55,7 +55,7 @@ final class MockAPIService: APIServiceProtocol {
                 dob: Dob(date: "1995-01-25T07:10:45Z", age: 31),
                 phone: "+39-055-555-1234",
                 cell: "+39-347-555-5678",
-                idInfo: UserID(name: "CF", value: "RSSISB95A65F205X"), // FIXED: changed 'id' to 'idInfo'
+                idInfo: UserID(name: "CF", value: "RSSISB95A65F205X"),
                 nat: "IT"
             ),
             // NOAH PATEL
@@ -70,7 +70,7 @@ final class MockAPIService: APIServiceProtocol {
                 dob: Dob(date: "1992-12-08T16:40:00Z", age: 33),
                 phone: "(416)-555-0133",
                 cell: "(647)-555-0188",
-                idInfo: UserID(name: "SIN", value: "123-456-789"), // FIXED: changed 'id' to 'idInfo'
+                idInfo: UserID(name: "SIN", value: "123-456-789"), 
                 nat: "CA"
             )
         ]

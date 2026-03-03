@@ -35,24 +35,24 @@ final class SettingsViewModel {
        
         let fetchedUsers: [User]? = await withTaskGroup(of: [User]?.self) { group -> [User]? in
             
-            // Task 1: real API call
+            
             group.addTask {
                 return try? await self.apiService.fetchUsers(settings: self.settings)
             }
             
-            // Task 2: 5-second timeout sentinel
+         
             group.addTask {
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
-                return nil // signals timeout
+                return nil
             }
             
-            // Take whichever finishes first
+           
             for await result in group {
-                group.cancelAll() // cancel the other task
+                group.cancelAll()
                 if let users = result {
-                    return users // real API won
+                    return users
                 } else {
-                    return nil  // timeout won (or real API returned nil)
+                    return nil
                 }
             }
             return nil
@@ -62,7 +62,7 @@ final class SettingsViewModel {
             print("Real API succeeded with \(users.count) users")
             self.users = users
         } else {
-            // Real API failed or timed out — use mock
+            
             print("Real API unavailable. Switching to MockAPIService...")
             do {
                 let mockUsers = try await MockAPIService().fetchUsers(settings: self.settings)
