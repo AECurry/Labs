@@ -14,13 +14,13 @@ import SwiftUI
 @main
 struct isoWalkApp: App {
     @State private var sessionManager = SessionManager()
-    @State private var sessionNavCoordinator = SessionNavCoordinator()
+    
 
     var body: some Scene {
         WindowGroup {
             isoWalkMainView()
                 .environment(sessionManager)
-                .environment(sessionNavCoordinator)
+                
         }
     }
 }

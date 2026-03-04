@@ -8,19 +8,17 @@
 //  Owns the ViewModel and Coordinator. Passes bindings down to children.
 //  Zero business logic — all decisions live in Coordinator and ViewModel.
 //
-//  NAV BAR ALERT ROUTING — self-contained:
-//  This view reads SessionNavCoordinator from the environment and registers
-//  its own tab-tap handler on .onAppear. From that moment, every nav bar
-//  tap in the app routes here first and triggers the confirmation alert.
-//  On .onDisappear it unregisters — restoring normal nav bar behaviour.
-//  No other view knows this is happening. This view is fully self-responsible.
+//  BOTTOM NAV BAR:
+//  This view owns its own BottomNavBar instance inside its ZStack.
+//  Every tap — back button, stop button, AND nav bar tabs — is wired
+//  directly to WalkSessionCoordinator using the exact same pattern.
+//  The coordinator handles the alert. No shared infrastructure needed.
 //
 
 import SwiftUI
 
 struct WalkSessionView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(SessionNavCoordinator.self) private var sessionNavCoordinator
     @Binding var selectedTab: Int
     @State private var viewModel = WalkSessionViewModel()
     @State private var coordinator = WalkSessionCoordinator()
@@ -62,17 +60,29 @@ struct WalkSessionView: View {
 
                 Spacer()
             }
+            .padding(.bottom, 100) // keeps content above the nav bar
+
+            // MARK: - BottomNavBar
+            // Owned by this view. Every tap wired to coordinator —
+            // identical pattern to the back button and stop button above.
+            // Re-tapping the current tab treats as back (leave session).
+            // Tapping a different tab confirms before navigating away.
+            BottomNavBar(
+                selectedTab: $selectedTab,
+                onTabReTap: {
+                    coordinator.handleBackButtonTap()
+                },
+                onTabChange: { tab in
+                    coordinator.handleTabTap(tab)
+                }
+            )
         }
         .navigationBarHidden(true)
         .onAppear {
-            // Local constants avoid @State dynamicMember subscript conflicts.
             let c = coordinator
             let vm = viewModel
             let dismissAll = onDismissAll
-            let navCoord = sessionNavCoordinator
 
-            // Wire session coordinator callbacks — all navigation decisions
-            // live here, self-contained, with no knowledge of parent views.
             c.onPauseForAlert    = { vm.pauseForAlert() }
             c.onResumeAfterAlert = { vm.resumeAfterAlert() }
             c.onBackToSetup      = { vm.stopSession(); dismiss() }
@@ -85,24 +95,9 @@ struct WalkSessionView: View {
                 }
             }
 
-            // Register with the shared coordinator so the app-level nav bar
-            // routes its taps here while this screen is active.
-            // Re-tapping the current tab = treat the same as the back button.
-            // Tapping a different tab = confirm then navigate.
-            navCoord.register { tab, isReTap in
-                if isReTap {
-                    c.handleBackButtonTap()
-                } else {
-                    c.handleTabTap(tab)
-                }
-            }
-
             vm.initializeSession(duration: duration, pace: pace, music: music)
         }
         .onDisappear {
-            // Unregister so the nav bar returns to normal the instant
-            // this screen leaves the stack. No cleanup needed elsewhere.
-            sessionNavCoordinator.unregister()
             viewModel.saveSessionState()
         }
         .onChange(of: scenePhase) { _, newPhase in
@@ -141,5 +136,4 @@ struct WalkSessionView: View {
         pace: .steady,
         music: .placeholder
     )
-    .environment(SessionNavCoordinator())
 }

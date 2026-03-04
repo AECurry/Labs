@@ -11,9 +11,11 @@
 //  Navigates to WalkSessionView via NavigationStack push — no flash,
 //  no cover sequencing.
 //
+//  BOTTOM NAV BAR:
+//  The overlay nav bar is visible on this screen only.
+//  Once navigateToSession is true, it hides — WalkSessionView owns
+//  its own nav bar wired directly to its coordinator.
 //  This view has zero knowledge of WalkSessionView's internals.
-//  It pushes WalkSessionView and its responsibility ends there.
-//  The BottomNavBar lives in isoWalkMainView — not here.
 //
 
 import SwiftUI
@@ -114,6 +116,27 @@ struct WalkSetUpView: View {
                 )
             }
             .navigationBarHidden(true)
+        }
+        // MARK: - BottomNavBar overlay
+        // Hidden once the session screen is pushed — WalkSessionView
+        // owns its own nav bar from that point forward.
+        .overlay(alignment: .bottom) {
+            if !navigateToSession {
+                BottomNavBar(
+                    selectedTab: $selectedTab,
+                    onTabReTap: { onDismiss() },
+                    onTabChange: { tab in
+                        var transaction = Transaction()
+                        transaction.disablesAnimations = true
+                        withTransaction(transaction) {
+                            selectedTab = tab
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            onDismiss()
+                        }
+                    }
+                )
+            }
         }
     }
 
