@@ -84,6 +84,8 @@ struct TabBarItem: View {
         Button(action: action) {
             VStack(spacing: 8) {
                 ZStack {
+                    // Circle is always in layout — opacity controls visibility.
+                    // This prevents layout shifts that cause the visual jump.
                     Circle()
                         .fill(isoWalkColors.gradientBlue)
                         .shadow(
@@ -116,7 +118,6 @@ struct TabBarItem: View {
                             .scaledToFit()
                             .frame(width: 42, height: 42)  
                             .foregroundColor(isSelected ? .white : isoWalkColors.deepSpaceBlue)
-                    ;
                     
                     } else {
                         

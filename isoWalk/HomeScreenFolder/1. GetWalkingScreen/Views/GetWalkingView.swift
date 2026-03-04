@@ -12,7 +12,8 @@ struct GetWalkingView: View {
     @AppStorage(IsoWalkThemes.selectedThemeKey) private var selectedThemeId: String = IsoWalkThemes.defaultThemeId
     private var theme: IsoWalkTheme { IsoWalkThemes.current(selectedId: selectedThemeId) }
 
-    @State private var showingSetup = false
+   
+    let onStartWalking: () -> Void
 
     var body: some View {
         ZStack {
@@ -33,23 +34,15 @@ struct GetWalkingView: View {
                 Spacer()
 
                 StartWalkingButton {
-                    showingSetup = true
+                    onStartWalking()
                 }
                 .padding(.bottom, 124)
             }
-        }
-        .fullScreenCover(isPresented: $showingSetup) {
-            WalkSetUpView(
-                onDismiss: {
-                    showingSetup = false
-                }
-            )
         }
     }
 }
 
 #Preview {
-    GetWalkingView()
+    GetWalkingView(onStartWalking: {})
         .environment(SessionManager())
 }
-

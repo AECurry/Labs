@@ -12,6 +12,7 @@ struct ImageAreaView: View {
 
     @State private var rotation: Double = 0
     @State private var scale: CGFloat = 1.0
+    @State private var isAnimating: Bool = false
 
     var body: some View {
         Image(theme.mainImageName)
@@ -23,25 +24,45 @@ struct ImageAreaView: View {
             .scaleEffect(scale)
             .id(theme.id)
             .onAppear { applyThemeAnimation() }
+            .onDisappear { isAnimating = false }
     }
 
     private func applyThemeAnimation() {
+        // Reset first — prevents stacked animations when onAppear
+        // fires again after navigation returns to this screen.
+        rotation = 0
+        scale = 1.0
+        isAnimating = true
+
         switch theme.animationType {
         case .rotation(let speed):
-            withAnimation(.linear(duration: speed).repeatForever(autoreverses: false)) {
+            withAnimation(
+                .linear(duration: speed)
+                .repeatForever(autoreverses: false)
+                // Speed-based autoReverse false keeps rotation smooth
+            ) {
                 rotation = 360
             }
         case .pulse(let min, let max, let speed):
             scale = min
-            withAnimation(.easeInOut(duration: speed).repeatForever(autoreverses: true)) {
+            withAnimation(
+                .easeInOut(duration: speed)
+                .repeatForever(autoreverses: true)
+            ) {
                 scale = max
             }
         case .rotatingPulse(let rotSpeed, let minSc, let maxSc, let pulseSpeed):
-            withAnimation(.linear(duration: rotSpeed).repeatForever(autoreverses: false)) {
+            withAnimation(
+                .linear(duration: rotSpeed)
+                .repeatForever(autoreverses: false)
+            ) {
                 rotation = 360
             }
             scale = minSc
-            withAnimation(.easeInOut(duration: pulseSpeed).repeatForever(autoreverses: true)) {
+            withAnimation(
+                .easeInOut(duration: pulseSpeed)
+                .repeatForever(autoreverses: true)
+            ) {
                 scale = maxSc
             }
         case .none:
@@ -53,4 +74,3 @@ struct ImageAreaView: View {
 #Preview {
     ImageAreaView(theme: IsoWalkThemes.all[0])
 }
-

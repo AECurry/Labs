@@ -7,11 +7,7 @@
 
 import SwiftUI
 
-// ==========================================
-// MARK: - IMAGE SIZES
-// Add new sizes here if you ever need them.
-// Use these everywhere — never hardcode a number.
-// ==========================================
+
 
 enum AnimatedImageSize {
     case extraLarge  // 335x335 — Get Walking screen
@@ -25,9 +21,7 @@ enum AnimatedImageSize {
     }
 }
 
-// ==========================================
-// MARK: - ANIMATED IMAGE CONFIGURATION MODEL
-// ==========================================
+
 
 struct AnimatedImageConfig: Identifiable {
     // MARK: - Core Identification Properties
@@ -121,9 +115,7 @@ struct AnimatedImageConfig: Identifiable {
     }
 }
 
-// ==========================================
-// MARK: - ANIMATED IMAGE LIBRARY
-// ==========================================
+
 
 struct AnimatedImageLibrary {
     static let availableImages: [AnimatedImageConfig] = [

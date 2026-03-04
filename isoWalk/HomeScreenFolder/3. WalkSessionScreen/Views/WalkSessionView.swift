@@ -6,13 +6,21 @@
 //
 //  PARENT VIEW — intentionally dumb.
 //  Owns the ViewModel and Coordinator. Passes bindings down to children.
-//  Zero layout logic beyond assembling components.
+//  Zero business logic — all decisions live in Coordinator and ViewModel.
+//
+//  NAV BAR ALERT ROUTING — self-contained:
+//  This view reads SessionNavCoordinator from the environment and registers
+//  its own tab-tap handler on .onAppear. From that moment, every nav bar
+//  tap in the app routes here first and triggers the confirmation alert.
+//  On .onDisappear it unregisters — restoring normal nav bar behaviour.
+//  No other view knows this is happening. This view is fully self-responsible.
 //
 
 import SwiftUI
 
 struct WalkSessionView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(SessionNavCoordinator.self) private var sessionNavCoordinator
     @Binding var selectedTab: Int
     @State private var viewModel = WalkSessionViewModel()
     @State private var coordinator = WalkSessionCoordinator()
@@ -26,12 +34,12 @@ struct WalkSessionView: View {
     var onDismissAll: (() -> Void)?
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             themeBackground
 
             VStack(spacing: 0) {
                 WalkSessionHeader(onBack: {
-                    coordinator.handleStopButtonTap()
+                    coordinator.handleBackButtonTap()
                 })
 
                 WalkSessionImageArea(theme: theme)
@@ -53,41 +61,64 @@ struct WalkSessionView: View {
                 )
 
                 Spacer()
-
-                BottomNavBar(
-                    selectedTab: $selectedTab,
-                    onTabReTap: {
-                        coordinator.handleStopButtonTap()
-                    },
-                    onTabChange: { tab in
-                        coordinator.handleTabTap(tab)
-                    }
-                )
             }
         }
         .navigationBarHidden(true)
         .onAppear {
-            setupCoordinator()
-            viewModel.initializeSession(duration: duration, pace: pace, music: music)
+            // Local constants avoid @State dynamicMember subscript conflicts.
+            let c = coordinator
+            let vm = viewModel
+            let dismissAll = onDismissAll
+            let navCoord = sessionNavCoordinator
+
+            // Wire session coordinator callbacks — all navigation decisions
+            // live here, self-contained, with no knowledge of parent views.
+            c.onPauseForAlert    = { vm.pauseForAlert() }
+            c.onResumeAfterAlert = { vm.resumeAfterAlert() }
+            c.onBackToSetup      = { vm.stopSession(); dismiss() }
+            c.onStopSession      = { vm.stopSession() }
+            c.onNavigateToTab    = { tab in
+                vm.stopSession()
+                selectedTab = tab
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    dismissAll?()
+                }
+            }
+
+            // Register with the shared coordinator so the app-level nav bar
+            // routes its taps here while this screen is active.
+            // Re-tapping the current tab = treat the same as the back button.
+            // Tapping a different tab = confirm then navigate.
+            navCoord.register { tab, isReTap in
+                if isReTap {
+                    c.handleBackButtonTap()
+                } else {
+                    c.handleTabTap(tab)
+                }
+            }
+
+            vm.initializeSession(duration: duration, pace: pace, music: music)
         }
         .onDisappear {
+            // Unregister so the nav bar returns to normal the instant
+            // this screen leaves the stack. No cleanup needed elsewhere.
+            sessionNavCoordinator.unregister()
             viewModel.saveSessionState()
         }
         .onChange(of: scenePhase) { _, newPhase in
             viewModel.handleScenePhase(newPhase)
         }
-        .sessionConfirmationAlert(
-            alertType: $coordinator.currentAlert,
-            onConfirm: { alertType in
-                coordinator.handleConfirmation(alertType)
-            },
-            onCancel: {
-                coordinator.handleCancellation()
-            }
-        )
+        .alert(
+            coordinator.alertType?.title ?? "",
+            isPresented: $coordinator.showAlert
+        ) {
+            Button("Cancel", role: .cancel) { coordinator.cancelAlert() }
+            Button(coordinator.alertType?.confirmButtonText ?? "Confirm",
+                   role: .destructive) { coordinator.confirmAlert() }
+        } message: {
+            Text(coordinator.alertType?.message ?? "")
+        }
     }
-
-    // MARK: - Background
 
     @ViewBuilder
     private var themeBackground: some View {
@@ -100,28 +131,6 @@ struct WalkSessionView: View {
             theme.backgroundColor.ignoresSafeArea()
         }
     }
-
-    // MARK: - Coordinator Wiring
-
-    private func setupCoordinator() {
-        coordinator.onNavigateToTab = { tab in
-            viewModel.stopSession()
-            selectedTab = tab
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                onDismissAll?()
-            }
-        }
-        coordinator.onStopSession = {
-            viewModel.stopSession()
-            dismiss()
-        }
-        coordinator.onPauseForAlert = {
-            viewModel.pauseForAlert()
-        }
-        coordinator.onResumeAfterAlert = {
-            viewModel.resumeAfterAlert()
-        }
-    }
 }
 
 #Preview {
@@ -132,4 +141,5 @@ struct WalkSessionView: View {
         pace: .steady,
         music: .placeholder
     )
+    .environment(SessionNavCoordinator())
 }

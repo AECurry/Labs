@@ -31,6 +31,11 @@ struct SetUpImageArea: View {
     }
 
     private func applyThemeAnimation() {
+        // Reset to starting values first — prevents stacked animations
+        // when onAppear fires again after navigation back to this screen.
+        rotation = 0
+        scale = 1.0
+
         switch theme.animationType {
         case .rotation(let speed):
             withAnimation(.linear(duration: speed).repeatForever(autoreverses: false)) {

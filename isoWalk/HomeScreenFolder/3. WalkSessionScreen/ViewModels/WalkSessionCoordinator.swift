@@ -4,9 +4,9 @@
 //
 //  Created by AnnElaine on 2/17/26.
 //
-//  COORDINATOR — handles navigation and confirmation logic for the walk session screen.
-//  Keeps WalkSessionView dumb by owning all decision-making about what happens
-//  when the user tries to leave or stop a session.
+//  COORDINATOR — owns ALL navigation and alert decision logic for WalkSessionView.
+//  WalkSessionView is dumb — it only reads showAlert/alertType and calls
+//  the three handle methods. Zero business logic lives in the view.
 //
 
 import SwiftUI
@@ -15,40 +15,56 @@ import Observation
 @Observable
 final class WalkSessionCoordinator {
 
-    var currentAlert: SessionAlertType? = nil
+    // Alert state — observed directly by WalkSessionView's .alert modifier
+    var showAlert = false
+    var alertType: SessionAlertType? = nil
 
-    // Navigation callbacks — wired up by WalkSessionView
-    var onNavigateToTab: ((Int) -> Void)?
+    // Outcome callbacks — wired by WalkSessionView in .onAppear
+    var onBackToSetup: (() -> Void)?
     var onStopSession: (() -> Void)?
-
-    // Timer pause/resume callbacks — wired up by WalkSessionView
+    var onNavigateToTab: ((Int) -> Void)?
     var onPauseForAlert: (() -> Void)?
     var onResumeAfterAlert: (() -> Void)?
 
-    // Called by any button or tab that would trigger a destructive action.
-    // Pauses the timer immediately before the alert appears.
-    func handleTabTap(_ tab: Int) {
+    // MARK: - Triggers (called by view buttons and nav bar)
+
+    func handleBackButtonTap() {
         onPauseForAlert?()
-        currentAlert = .exitToTab(tab)
+        alertType = .backToSetup
+        showAlert = true
     }
 
     func handleStopButtonTap() {
         onPauseForAlert?()
-        currentAlert = .stopSession
+        alertType = .stopSession
+        showAlert = true
     }
 
-    // Called by the alert's Cancel button via sessionConfirmationAlert modifier.
-    func handleCancellation() {
-        onResumeAfterAlert?()
+    func handleTabTap(_ tab: Int) {
+        onPauseForAlert?()
+        alertType = .exitToTab(tab)
+        showAlert = true
     }
 
-    func handleConfirmation(_ alertType: SessionAlertType) {
-        // No need to resume — the session is ending.
-        switch alertType {
-        case .exitToTab(let tab):
-            onNavigateToTab?(tab)
+    // MARK: - User Decisions (called by view alert buttons)
+
+    func confirmAlert() {
+        guard let type = alertType else { return }
+        alertType = nil
+        showAlert = false
+        switch type {
+        case .backToSetup:
+            onBackToSetup?()
         case .stopSession:
             onStopSession?()
+        case .exitToTab(let tab):
+            onNavigateToTab?(tab)
         }
+    }
+
+    func cancelAlert() {
+        alertType = nil
+        showAlert = false
+        onResumeAfterAlert?()
     }
 }
